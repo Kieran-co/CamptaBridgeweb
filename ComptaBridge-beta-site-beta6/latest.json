@@ -1,5 +1,5 @@
 {
-  "version": "1.0.0-beta.6",
-  "download_url": "https://github.com/Kieran-co/ComptaBridge/releases/latest",
-  "release_notes": "Version bêta avec vérification des mises à jour et revue des exports par lots."
+  "version": "1.0.0-beta.7",
+  "download_url": "https://github.com/Kieran-co/CamptaBridgeweb/releases/download/v1.0.0-beta.7/ComptaBridge_Setup_v1.0.0-beta.7.exe",
+  "release_notes": "Téléchargement et lancement automatiques de l'installateur depuis ComptaBridge."
 }
