@@ -1,0 +1,200 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="ComptaBridge convertit localement les relevés bancaires en fichiers OFX contrôlables avant import comptable.">
+  <meta property="og:title" content="ComptaBridge — Programme bêta">
+  <meta property="og:description" content="Vos relevés vers OFX, 100 % local.">
+  <meta property="og:image" content="assets/comptabridge-social-card.png">
+  <title>ComptaBridge — Programme bêta</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <header class="nav">
+    <a class="brand" href="#accueil" aria-label="Accueil ComptaBridge">
+      <img src="assets/comptabridge-logo.png" alt="ComptaBridge">
+    </a>
+    <nav aria-label="Navigation principale">
+      <a href="#fonctionnement">Fonctionnement</a>
+      <a href="#securite">Confidentialité</a>
+      <a class="button button-small" href="#candidature">Devenir bêta-testeur</a>
+      <a href="extracteur.html">Extracteur de factures</a>
+    </nav>
+  </header>
+
+  <main>
+    <section class="hero" id="accueil">
+      <div class="hero-copy">
+        <span class="eyebrow"><span></span> Programme bêta privé</span>
+        <h1>Vos relevés bancaires vers OFX, sans quitter votre ordinateur.</h1>
+        <p class="lead">
+          ComptaBridge extrait, contrôle et convertit vos relevés en un fichier
+          OFX prêt à être importé dans votre logiciel comptable.
+        </p>
+        <div class="hero-actions">
+          <a class="button" href="#candidature">Candidater gratuitement</a>
+          <a class="button button-ghost" href="#fonctionnement">Découvrir le logiciel</a>
+        </div>
+        <ul class="hero-points" aria-label="Points forts">
+          <li>Traitement 100 % local</li>
+          <li>Contrôle avant export</li>
+          <li>Testé avec ISACOMPTA</li>
+        </ul>
+      </div>
+      <div class="hero-visual">
+        <img src="assets/comptabridge-social-card.png" alt="Présentation de ComptaBridge sur un ordinateur portable">
+      </div>
+    </section>
+
+    <section class="proof strip">
+      <p><strong>Conçu avec des retours terrain.</strong> La Release Candidate est déjà utilisée pour des imports réels dans ISACOMPTA.</p>
+    </section>
+
+    <section class="section" id="fonctionnement">
+      <div class="section-heading">
+        <span class="eyebrow">Simple à vérifier</span>
+        <h2>Trois étapes, aucune ressaisie complète</h2>
+        <p>Le logiciel assiste le comptable sans lui retirer le contrôle.</p>
+      </div>
+      <div class="steps">
+        <article class="card step">
+          <span class="step-number">01</span>
+          <h3>Importez</h3>
+          <p>Déposez un relevé PDF texte, CSV, Excel, QIF, TXT ou OFX.</p>
+        </article>
+        <article class="card step">
+          <span class="step-number">02</span>
+          <h3>Contrôlez</h3>
+          <p>Vérifiez les dates, libellés, types, débits et crédits. Les anomalies sont signalées.</p>
+        </article>
+        <article class="card step">
+          <span class="step-number">03</span>
+          <h3>Exportez</h3>
+          <p>Générez localement un OFX structuré puis importez-le dans votre logiciel comptable.</p>
+        </article>
+      </div>
+    </section>
+
+    <section class="section product-showcase">
+      <div class="showcase-copy">
+        <span class="eyebrow">Une interface claire</span>
+        <h2>Vous voyez ce qui sera exporté.</h2>
+        <p>
+          ComptaBridge n’effectue pas une conversion silencieuse. Les lignes
+          restent visibles et modifiables avant la création du fichier OFX.
+        </p>
+        <ul class="check-list">
+          <li>Banque et format détectés</li>
+          <li>Débits et crédits séparés</li>
+          <li>Types CB, virements, prélèvements, remises et chèques</li>
+          <li>Avertissements localisés dans le tableau</li>
+        </ul>
+      </div>
+      <figure class="app-frame">
+        <div class="window-bar"><i></i><i></i><i></i><span>ComptaBridge</span></div>
+        <img src="assets/comptabridge-interface.png" alt="Interface actuelle de ComptaBridge">
+        <figcaption>Interface de la version de test — les données montrées sont fictives.</figcaption>
+      </figure>
+    </section>
+
+    <section class="section security" id="securite">
+      <div class="security-mark" aria-hidden="true">100<span>%</span></div>
+      <div>
+        <span class="eyebrow">Confidentialité par conception</span>
+        <h2>Le relevé reste sur le poste de travail.</h2>
+        <p>
+          Aucun relevé bancaire, libellé, montant ou numéro de compte n’est
+          envoyé vers un serveur. Même le rapport de diagnostic est créé
+          localement, anonymisé et transmis uniquement à l’initiative de
+          l’utilisateur.
+        </p>
+        <div class="privacy-grid">
+          <span>✓ Sans compte en ligne</span>
+          <span>✓ Fonctionne hors connexion</span>
+          <span>✓ Profils locaux chiffrés</span>
+          <span>✓ Logs techniques anonymisés</span>
+        </div>
+      </div>
+    </section>
+
+    <section class="section coverage">
+      <div class="section-heading">
+        <span class="eyebrow">Couverture maîtrisée</span>
+        <h2>Des banques validées progressivement</h2>
+      </div>
+      <div class="bank-list">
+        <span>Crédit Agricole</span>
+        <span>Banque Populaire</span>
+        <span>CIC</span>
+        <span>Fortuneo</span>
+      </div>
+      <p class="note">
+        La bêta sert précisément à étendre cette couverture. Nous ne promettons
+        pas encore une compatibilité universelle avec toutes les présentations
+        de relevés.
+      </p>
+    </section>
+
+    <section class="section beta" id="candidature">
+      <div class="beta-copy">
+        <span class="eyebrow">10 places</span>
+        <h2>Devenez bêta-testeur fondateur.</h2>
+        <p>
+          Nous recherchons des professionnels manipulant régulièrement des
+          relevés bancaires et souhaitant contribuer à une version fiable.
+        </p>
+        <div class="founder">
+          <strong>En échange de retours utiles :</strong>
+          <span>licence ComptaBridge 1.x gratuite, personnelle et sans expiration.</span>
+        </div>
+      </div>
+
+      <form class="beta-form" id="beta-form">
+        <label>
+          Nom ou pseudonyme
+          <input name="nom" autocomplete="name" required>
+        </label>
+        <label>
+          Adresse e-mail
+          <input type="email" name="email" autocomplete="email" required>
+        </label>
+        <label>
+          Votre activité
+          <select name="activite" required>
+            <option value="">Sélectionner</option>
+            <option>Collaborateur comptable</option>
+            <option>Expert-comptable</option>
+            <option>Comptable en entreprise</option>
+            <option>Indépendant / dirigeant</option>
+            <option>Autre</option>
+          </select>
+        </label>
+        <label>
+          Logiciel comptable utilisé
+          <input name="logiciel" placeholder="Ex. ISACOMPTA, Sage, EBP…">
+        </label>
+        <label>
+          Banques à tester
+          <input name="banques" placeholder="Ex. CIC, Banque Populaire…">
+        </label>
+        <label class="consent">
+          <input type="checkbox" name="consentement" required>
+          <span>J’accepte d’être recontacté uniquement au sujet du programme bêta.</span>
+        </label>
+        <button class="button" type="submit">Préparer ma candidature</button>
+        <p class="form-status" id="form-status" role="status"></p>
+        <p class="form-note">Ce prototype n’envoie encore aucune donnée. La collecte sera activée uniquement lors de la publication validée.</p>
+      </form>
+    </section>
+  </main>
+
+  <footer>
+    <img src="assets/comptabridge-logo.png" alt="ComptaBridge">
+    <p>ComptaBridge — Conversion bancaire locale vers OFX.</p>
+    <p>Release Candidate 0.9.0 · Programme bêta privé</p>
+  </footer>
+
+  <script src="script.js"></script>
+</body>
+</html>
