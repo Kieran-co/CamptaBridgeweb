@@ -9,7 +9,6 @@ const keys = {
 
 const guestView = document.querySelector("#guest-view");
 const dashboard = document.querySelector("#dashboard-view");
-const licenses = document.querySelector("#licenses");
 const invoiceList = document.querySelector("#invoice-list");
 const invoiceStoragePrefix = "comptabridge_invoice_drafts:";
 const invoiceStatuses = {
@@ -146,27 +145,8 @@ function showDashboard() {
   dashboard.hidden = false;
   renderProfile(currentProfile());
   loadProfile();
-  loadLicenses();
   renderInvoices();
   loadInvoices();
-}
-
-async function loadLicenses() {
-  const token = sessionValue(keys.token);
-  if (!token) return;
-  licenses.innerHTML = "<p class='muted'>Chargement…</p>";
-  try {
-    const data = await request("auth/licenses", { headers: { Authorization: `Bearer ${token}` } });
-    const list = Array.isArray(data.licenses) ? data.licenses : [];
-    document.querySelector("#license-count").textContent = String(list.length);
-    if (!list.length) {
-      licenses.innerHTML = "<div class='empty-state'><b>Aucune licence liée</b><span>Votre future licence apparaîtra automatiquement ici après son activation.</span></div>";
-      return;
-    }
-    licenses.innerHTML = list.map((license) => `<div class="license-row"><div><strong>${escapeHtml(license.plan || "Licence")}</strong><span>${escapeHtml(license.customer || "ComptaBridge")}</span><small>${escapeHtml(license.license_id || "")}</small></div><span class="status-badge">${escapeHtml(license.status || "—")}<br><small>jusqu'au ${escapeHtml((license.expires_at || "—").slice(0, 10))}</small></span></div>`).join("");
-  } catch (error) {
-    licenses.innerHTML = `<p class="form-status error">${escapeHtml(error.message)}</p>`;
-  }
 }
 
 function invoiceDrafts() {
@@ -439,7 +419,6 @@ document.querySelector("#show-reset").addEventListener("click", () => {
   showAuthView("reset-view");
 });
 document.querySelectorAll("[data-auth-view]").forEach((button) => button.addEventListener("click", () => showAuthView(button.dataset.authView)));
-document.querySelector("#refresh-button").addEventListener("click", loadLicenses);
 document.querySelector("#edit-profile-button").addEventListener("click", () => { document.querySelector("#profile-summary").hidden = true; document.querySelector("#profile-form").hidden = false; });
 document.querySelector("#cancel-profile-button").addEventListener("click", () => { document.querySelector("#profile-form").hidden = true; document.querySelector("#profile-summary").hidden = false; renderProfile(currentProfile()); });
 document.querySelector("#logout-button").addEventListener("click", () => { clearSession(); window.location.reload(); });

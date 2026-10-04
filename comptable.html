@@ -5,20 +5,21 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="robots" content="noindex,nofollow">
   <title>Espace comptable — ComptaBridge</title>
-  <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="styles.css?v=20261004-5">
 </head>
 <body class="role-portal accountant-portal">
   <div class="portal-layout">
     <aside class="portal-sidebar">
       <a class="portal-brand" href="index.html"><img src="assets/comptabridge-logo.png" alt="ComptaBridge"></a>
       <div class="portal-role"><span>CD</span><div><strong>Cabinet Démo</strong><small>Espace comptable</small></div></div>
-      <nav class="portal-menu" aria-label="Espace comptable"><a class="active" href="#dashboard">Vue d’ensemble</a><a href="#invoices">Factures disponibles</a><a href="#clients">Mes clients</a><a href="#downloads">Téléchargements</a></nav>
+      <nav class="portal-menu" aria-label="Espace comptable"><a class="active" href="#dashboard">Vue d’ensemble</a><a href="#upload">Déposer pour un client</a><a href="#invoices">Documents clients</a><a href="#clients">Mes clients</a><a href="#downloads">Téléchargements</a></nav>
       <div class="portal-sidebar-foot"><span class="online-state"><i></i> Vérification…</span><a href="compte.html">Espace client</a><button class="portal-logout" data-logout type="button">Se déconnecter</button></div>
     </aside>
     <main class="portal-main" id="dashboard">
-      <header class="portal-topbar"><div><span class="eyebrow">Espace partenaire</span><h1>Factures de tes clients</h1><p>Télécharge uniquement les Factur-X que les entreprises t’ont autorisé à consulter.</p></div><button class="button button-ghost button-small" type="button">Actualiser</button></header>
-      <section class="portal-metrics accountant-metrics"><article><span>Clients attribués</span><strong>2</strong><small>Accès actifs</small></article><article><span>Disponibles</span><strong>5</strong><small>Factur-X à récupérer</small></article><article><span>Téléchargées</span><strong>18</strong><small>Ce mois-ci</small></article></section>
-      <section class="portal-panel" id="invoices"><div class="portal-panel-head"><div><span class="eyebrow">Factur-X disponibles</span><h2>Documents à récupérer</h2></div><span class="status-badge status-badge-ready">Documents autorisés</span></div><div class="portal-table-wrap"><table class="portal-table"><thead><tr><th>Entreprise</th><th>Facture</th><th>Date</th><th>Référence</th><th>Statut</th><th></th></tr></thead><tbody id="portal-documents-body">
+      <header class="portal-topbar"><div><span class="eyebrow">Espace partenaire</span><h1>Factures de tes clients</h1><p>Dépose une facture pour le bon client, puis récupère les Factur-X préparés par ComptaBridge.</p></div><button class="button button-ghost button-small" data-refresh-portal type="button">Actualiser</button></header>
+      <section class="portal-metrics accountant-metrics"><article><span>Documents reçus</span><strong id="accountant-metric-received">0</strong><small>À traiter par ComptaBridge</small></article><article><span>Factur-X disponibles</span><strong id="accountant-metric-ready">0</strong><small>À récupérer</small></article><article><span>Terminés</span><strong id="accountant-metric-completed">0</strong><small>Ce mois-ci</small></article></section>
+      <section class="portal-panel accountant-upload-panel" id="upload"><div class="portal-panel-head"><div><span class="eyebrow">Dépôt pour un client</span><h2>Déposer une facture à sa place</h2><p class="portal-panel-intro">Sélectionne l’entreprise concernée. Le document sera rattaché à son espace et apparaîtra dans la file d’administration pour la génération du Factur-X.</p></div><span class="status-badge status-badge-received">Statut initial : Reçu</span></div><form id="accountant-upload-form" class="accountant-upload-form"><label>Client concerné<select id="accountant-client" required><option value="">Chargement des clients…</option></select></label><label>Fichier à déposer<input id="accountant-file" type="file" accept="application/pdf,image/jpeg,image/png" required><small>PDF, JPG ou PNG · 10 Mo maximum</small></label><label>Référence (optionnel)<input id="accountant-reference" maxlength="120" placeholder="Ex. Facture fournisseur - septembre"></label><label>Commentaire (optionnel)<textarea id="accountant-comment" rows="2" maxlength="500" placeholder="Précision pour le traitement"></textarea></label><p id="accountant-upload-status" class="form-status" role="status"></p><button class="button" type="submit">Déposer pour ce client <span>→</span></button></form></section>
+      <section class="portal-panel" id="invoices"><div class="portal-panel-head"><div><span class="eyebrow">Suivi des documents</span><h2>Documents de mes clients</h2></div><span class="status-badge status-badge-ready">Accès autorisé</span></div><div class="portal-table-wrap"><table class="portal-table"><thead><tr><th>Entreprise</th><th>Facture</th><th>Date</th><th>Référence</th><th>Statut</th><th></th></tr></thead><tbody id="portal-documents-body">
         <tr><td><strong>Maison Rivage</strong><small>SIREN ••• 842</small></td><td>FR-2026-104</td><td>30 sept. 2026</td><td>1 248,00 €</td><td><span class="status-badge status-badge-ready">Disponible</span></td><td><button class="button button-small" type="button">Télécharger</button></td></tr>
         <tr><td><strong>Atelier Horizon</strong><small>SIREN ••• 190</small></td><td>AH-2026-088</td><td>29 sept. 2026</td><td>684,50 €</td><td><span class="status-badge status-badge-ready">Disponible</span></td><td><button class="button button-small" type="button">Télécharger</button></td></tr>
       </tbody></table></div></section>
@@ -26,6 +27,6 @@
       <p class="portal-preview-note">Prévisualisation locale — aucun document réel n’est disponible sur cette page tant que l’API VPS n’est pas branchée.</p>
     </main>
   </div>
-  <script src="portail-roles.js?v=20261004-3"></script>
+  <script src="portail-roles.js?v=20261004-4"></script>
 </body>
 </html>

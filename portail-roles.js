@@ -81,6 +81,22 @@
     URL.revokeObjectURL(url);
   }
 
+  async function uploadPortalDocument(file, customerId, reference, comment) {
+    const form = new FormData();
+    form.append("file", file);
+    form.append("customer_id", customerId);
+    form.append("reference", reference);
+    form.append("comment", comment);
+    const response = await fetch(`${API}/portal/documents`, {
+      method: "POST",
+      headers: { Authorization: `Bearer ${token}` },
+      body: form,
+    });
+    const data = await response.json().catch(() => ({}));
+    if (!response.ok) throw new Error(data.detail || "Dépôt du document impossible.");
+    return data.document;
+  }
+
   async function uploadFacturx(documentId, file) {
     const form = new FormData();
     form.append("file", file);
@@ -126,7 +142,9 @@
       const statusAction = transition ? `<button class="table-action" type="button" data-status-id="${escapeHtml(document.document_id)}" data-next-status="${transition[0]}">${transition[1]}</button>` : "";
       const facturxAction = page === "administrator" ? (document.facturx_available ? `<button class="table-action" type="button" data-facturx-download-id="${escapeHtml(document.document_id)}" data-facturx-name="${escapeHtml(document.facturx_name)}">Télécharger Factur-X</button>` : `<input class="portal-hidden-file" id="facturx-${escapeHtml(document.document_id)}" data-facturx-input="${escapeHtml(document.document_id)}" type="file" accept="application/pdf"><label class="table-action" for="facturx-${escapeHtml(document.document_id)}">Déposer le Factur-X</label>`) : "";
       const clientFacturxAction = document.facturx_available ? `<button class="table-action" type="button" data-facturx-download-id="${escapeHtml(document.document_id)}" data-facturx-name="${escapeHtml(document.facturx_name)}">Télécharger Factur-X</button>` : "";
-      const action = page === "administrator" ? `${statusAction}${facturxAction}${downloadAction}` : `${clientFacturxAction}${downloadAction}`;
+      const accountantOriginalAction = page === "accountant" && ["ready", "downloaded", "completed"].includes(status) ? downloadAction : "";
+      const accountantWaiting = page === "accountant" && !accountantOriginalAction && !clientFacturxAction ? `<span class="muted">En attente de traitement</span>` : "";
+      const action = page === "administrator" ? `${statusAction}${facturxAction}${downloadAction}` : `${clientFacturxAction}${accountantOriginalAction}${accountantWaiting}`;
       if (page === "accountant") {
         return `<tr><td><strong>${escapeHtml(customer)}</strong><small>${escapeHtml(document.customer_email || "")}</small></td><td>${escapeHtml(document.name)}</td><td>${escapeHtml(date)}</td><td>${escapeHtml(document.reference || "—")}</td><td><span class="status-badge ${statusClasses[status] || ""}">${escapeHtml(label)}</span>${workflowMarkup(status)}</td><td>${action}</td></tr>`;
       }
@@ -170,11 +188,25 @@
   }
 
   function updateMetrics(documents) {
-    if (page !== "administrator") return;
     const counts = documents.reduce((result, item) => {
       result[item.status] = (result[item.status] || 0) + 1;
       return result;
     }, {});
+    if (page === "accountant") {
+      const received = ["received", "processing", "correction", "failed"].reduce((total, status) => total + (counts[status] || 0), 0);
+      const ready = (counts.ready || 0) + (counts.downloaded || 0);
+      const completed = counts.completed || 0;
+      const accountantValues = {
+        received: received,
+        ready: ready,
+        completed: completed,
+      };
+      Object.entries(accountantValues).forEach(([status, value]) => {
+        const element = document.querySelector(`#accountant-metric-${status}`);
+        if (element) element.textContent = String(value);
+      });
+      return;
+    }
     const values = {
       received: counts.received || 0,
       processing: counts.processing || 0,
@@ -225,6 +257,26 @@
     }
   }
 
+  async function loadPortalClients() {
+    if (page !== "accountant") return;
+    const select = document.querySelector("#accountant-client");
+    if (!select) return;
+    try {
+      const response = await fetch(`${API}/portal/clients`, { headers: { Authorization: `Bearer ${token}` } });
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(data.detail || "Impossible de charger les clients.");
+      const clients = Array.isArray(data.clients) ? data.clients : [];
+      select.innerHTML = clients.length
+        ? `<option value="">Choisir un client…</option>${clients.map((client) => {
+          const name = [client.first_name, client.last_name].filter(Boolean).join(" ") || client.email;
+          return `<option value="${escapeHtml(client.customer_id)}">${escapeHtml(name)} — ${escapeHtml(client.email)}</option>`;
+        }).join("")}`
+        : `<option value="">Aucun client disponible</option>`;
+    } catch (error) {
+      select.innerHTML = `<option value="">${escapeHtml(error.message)}</option>`;
+    }
+  }
+
   async function loadAccountantRequests() {
     if (page !== "administrator" || !token) return;
     const list = document.querySelector("#accountant-requests-list");
@@ -262,6 +314,7 @@
       renderProfile(profile);
       setConnectionState(true, "API connectée");
       loadDocuments();
+      loadPortalClients();
       loadAccountantRequests();
     } catch (error) {
       setConnectionState(false, "Connexion indisponible");
@@ -282,6 +335,44 @@
   });
 
   document.querySelectorAll("[data-logout]").forEach((button) => button.addEventListener("click", goToLogin));
+  document.querySelectorAll("[data-refresh-portal]").forEach((button) => button.addEventListener("click", () => {
+    loadDocuments();
+    loadPortalClients();
+  }));
+  const accountantUploadForm = document.querySelector("#accountant-upload-form");
+  if (accountantUploadForm) accountantUploadForm.addEventListener("submit", async (event) => {
+    event.preventDefault();
+    const status = document.querySelector("#accountant-upload-status");
+    const file = document.querySelector("#accountant-file")?.files?.[0];
+    const customerId = document.querySelector("#accountant-client")?.value || "";
+    if (!customerId) { status.textContent = "Sélectionne le client concerné."; status.classList.add("error"); return; }
+    if (!file) { status.textContent = "Sélectionne un fichier à déposer."; status.classList.add("error"); return; }
+    if (!["application/pdf", "image/jpeg", "image/png"].includes(file.type) || file.size > 10 * 1024 * 1024) {
+      status.textContent = "Format accepté : PDF, JPG ou PNG de 10 Mo maximum.";
+      status.classList.add("error");
+      return;
+    }
+    status.classList.remove("error");
+    status.textContent = "Dépôt en cours…";
+    const submit = accountantUploadForm.querySelector("button[type=submit]");
+    if (submit) submit.disabled = true;
+    try {
+      await uploadPortalDocument(
+        file,
+        customerId,
+        document.querySelector("#accountant-reference").value.trim(),
+        document.querySelector("#accountant-comment").value.trim(),
+      );
+      status.textContent = "Document déposé. Il est maintenant visible dans l’administration avec le statut « Reçu ».";
+      accountantUploadForm.reset();
+      await loadDocuments();
+    } catch (error) {
+      status.textContent = error.message;
+      status.classList.add("error");
+    } finally {
+      if (submit) submit.disabled = false;
+    }
+  });
   loadProfile();
   // Le suivi reste vivant même si l'administration et l'espace client sont ouverts
   // dans deux onglets différents. L'API reste la source de vérité.
