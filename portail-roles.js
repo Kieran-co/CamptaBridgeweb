@@ -266,7 +266,10 @@
       const company = client.company_name || "Entreprise à compléter";
       const contact = [client.first_name, client.last_name].filter(Boolean).join(" ");
       const initials = company.split(/\s+/).map((part) => part[0]).join("").slice(0, 2).toUpperCase();
-      return `<div><span class="portal-avatar">${escapeHtml(initials || "CL")}</span><p><strong>${escapeHtml(company)}</strong><small>${escapeHtml(contact ? `${contact} · ` : "")}${escapeHtml(client.email || "")}</small></p><span class="status-badge status-badge-completed">Autorisé</span></div>`;
+      const contactLine = contact || client.email || "Compte client à créer";
+      const stateLabel = client.pending_account ? "À inviter" : "Autorisé";
+      const stateClass = client.pending_account ? "status-badge-received" : "status-badge-completed";
+      return `<div><span class="portal-avatar">${escapeHtml(initials || "CL")}</span><p><strong>${escapeHtml(company)}</strong><small>${escapeHtml(contactLine)}</small></p><span class="status-badge ${stateClass}">${stateLabel}</span></div>`;
     }).join("");
   }
 
@@ -424,8 +427,8 @@
     const status = document.querySelector("#accountant-client-status");
     const companyName = document.querySelector("#accountant-company-name")?.value.trim() || "";
     const email = document.querySelector("#accountant-client-email")?.value.trim() || "";
-    if (!companyName || !email) {
-      status.textContent = "Renseigne le nom de l’entreprise et l’e-mail du compte client.";
+    if (!companyName) {
+      status.textContent = "Renseigne le nom de l’entreprise.";
       status.classList.add("error");
       return;
     }
