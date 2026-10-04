@@ -471,6 +471,11 @@ footer img { width: 170px; }
 .accountant-upload-form > .form-status, .accountant-upload-form > .button { grid-column: 1 / -1; }
 .accountant-upload-form > .form-status { margin: 0; }
 .accountant-upload-form > .button { justify-self: start; }
+.accountant-client-form { display: grid; gap: 14px; }
+.accountant-client-form label { display: grid; gap: 7px; color: #cfe0ed; font-size: .86rem; font-weight: 700; }
+.accountant-client-form input { width: 100%; border: 1px solid #38546a; border-radius: 9px; background: #0b1723; color: #fff; padding: 11px 12px; font: inherit; }
+.accountant-client-form input:focus { outline: 2px solid rgba(69, 169, 239, .35); border-color: #45a9ef; }
+.accountant-client-form > .form-status { margin: 0; }
 .portal-filters { display: flex; flex-wrap: wrap; gap: 6px; }
 .portal-filters button, .table-action { border: 1px solid #2f4d66; border-radius: 8px; background: transparent; color: #aac0d2; padding: 7px 10px; cursor: pointer; }
 .portal-filters button.active, .portal-filters button:hover, .table-action:hover { border-color: #2b8eff; color: #fff; background: rgba(25,118,233,.14); }

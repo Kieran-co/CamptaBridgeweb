@@ -97,6 +97,17 @@
     return data.document;
   }
 
+  async function addManagedClient(companyName, email) {
+    const response = await fetch(`${API}/portal/clients`, {
+      method: "POST",
+      headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+      body: JSON.stringify({ company_name: companyName, email }),
+    });
+    const data = await response.json().catch(() => ({}));
+    if (!response.ok) throw new Error(data.detail || "Impossible d’ajouter ce client.");
+    return data.client;
+  }
+
   async function uploadFacturx(documentId, file) {
     const form = new FormData();
     form.append("file", file);
@@ -132,6 +143,7 @@
     }
     updateMetrics(documents);
     renderClients(documents);
+    renderAccountantDownloads(documents);
     body.innerHTML = documents.map((document) => {
       const status = document.status || "received";
       const label = statusLabels[status] || status;
@@ -242,6 +254,37 @@
     }).join("");
   }
 
+  function renderAccountantClients(clients) {
+    if (page !== "accountant") return;
+    const list = document.querySelector("#portal-accountant-clients-list");
+    if (!list) return;
+    if (!clients.length) {
+      list.innerHTML = `<div class="portal-empty-mini"><strong>Aucun client rattaché</strong><span>Ajoute un compte client avec son e-mail ci-dessus.</span></div>`;
+      return;
+    }
+    list.innerHTML = clients.map((client) => {
+      const company = client.company_name || "Entreprise à compléter";
+      const contact = [client.first_name, client.last_name].filter(Boolean).join(" ");
+      const initials = company.split(/\s+/).map((part) => part[0]).join("").slice(0, 2).toUpperCase();
+      return `<div><span class="portal-avatar">${escapeHtml(initials || "CL")}</span><p><strong>${escapeHtml(company)}</strong><small>${escapeHtml(contact ? `${contact} · ` : "")}${escapeHtml(client.email || "")}</small></p><span class="status-badge status-badge-completed">Autorisé</span></div>`;
+    }).join("");
+  }
+
+  function renderAccountantDownloads(documents) {
+    if (page !== "accountant") return;
+    const list = document.querySelector("#portal-accountant-downloads-list");
+    if (!list) return;
+    const completed = documents.filter((item) => ["downloaded", "completed"].includes(item.status));
+    if (!completed.length) {
+      list.innerHTML = `<div class="portal-empty-mini"><strong>Aucun téléchargement</strong><span>Les documents récupérés apparaîtront ici.</span></div>`;
+      return;
+    }
+    list.innerHTML = completed.slice(0, 8).map((item) => {
+      const date = new Date(item.updated_at || item.created_at).toLocaleString("fr-FR", { dateStyle: "medium", timeStyle: "short" });
+      return `<div><p><strong>${escapeHtml(item.facturx_name || item.name)}</strong><small>${escapeHtml(item.customer_name || item.customer_email || "Client")} · ${escapeHtml(date)}</small></p><span class="status-badge status-badge-downloaded">Téléchargé</span></div>`;
+    }).join("");
+  }
+
   async function loadDocuments() {
     if (!token) return;
     try {
@@ -253,6 +296,7 @@
       const body = document.querySelector("#portal-documents-body");
       if (body) body.innerHTML = `<tr><td colspan="6"><span class="muted">${escapeHtml(error.message)}</span></td></tr>`;
       renderClients([]);
+      renderAccountantDownloads([]);
       updateMetrics([]);
     }
   }
@@ -260,20 +304,21 @@
   async function loadPortalClients() {
     if (page !== "accountant") return;
     const select = document.querySelector("#accountant-client");
-    if (!select) return;
     try {
       const response = await fetch(`${API}/portal/clients`, { headers: { Authorization: `Bearer ${token}` } });
       const data = await response.json().catch(() => ({}));
       if (!response.ok) throw new Error(data.detail || "Impossible de charger les clients.");
       const clients = Array.isArray(data.clients) ? data.clients : [];
-      select.innerHTML = clients.length
+      if (select) select.innerHTML = clients.length
         ? `<option value="">Choisir un client…</option>${clients.map((client) => {
-          const name = [client.first_name, client.last_name].filter(Boolean).join(" ") || client.email;
+          const name = client.company_name || [client.first_name, client.last_name].filter(Boolean).join(" ") || "Entreprise à compléter";
           return `<option value="${escapeHtml(client.customer_id)}">${escapeHtml(name)} — ${escapeHtml(client.email)}</option>`;
         }).join("")}`
         : `<option value="">Aucun client disponible</option>`;
+      renderAccountantClients(clients);
     } catch (error) {
-      select.innerHTML = `<option value="">${escapeHtml(error.message)}</option>`;
+      if (select) select.innerHTML = `<option value="">${escapeHtml(error.message)}</option>`;
+      renderAccountantClients([]);
     }
   }
 
@@ -366,6 +411,33 @@
       status.textContent = "Document déposé. Il est maintenant visible dans l’administration avec le statut « Reçu ».";
       accountantUploadForm.reset();
       await loadDocuments();
+    } catch (error) {
+      status.textContent = error.message;
+      status.classList.add("error");
+    } finally {
+      if (submit) submit.disabled = false;
+    }
+  });
+  const accountantClientForm = document.querySelector("#accountant-client-form");
+  if (accountantClientForm) accountantClientForm.addEventListener("submit", async (event) => {
+    event.preventDefault();
+    const status = document.querySelector("#accountant-client-status");
+    const companyName = document.querySelector("#accountant-company-name")?.value.trim() || "";
+    const email = document.querySelector("#accountant-client-email")?.value.trim() || "";
+    if (!companyName || !email) {
+      status.textContent = "Renseigne le nom de l’entreprise et l’e-mail du compte client.";
+      status.classList.add("error");
+      return;
+    }
+    status.classList.remove("error");
+    status.textContent = "Ajout en cours…";
+    const submit = accountantClientForm.querySelector("button[type=submit]");
+    if (submit) submit.disabled = true;
+    try {
+      await addManagedClient(companyName, email);
+      status.textContent = "Client ajouté. Il est maintenant disponible pour les dépôts.";
+      accountantClientForm.reset();
+      await loadPortalClients();
     } catch (error) {
       status.textContent = error.message;
       status.classList.add("error");
