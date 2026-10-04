@@ -136,6 +136,14 @@
               <label>Prénom<input id="profile-first-name" maxlength="60" required></label>
               <label>Nom<input id="profile-last-name" maxlength="60" required></label>
             </div>
+            <label>Nom de l’entreprise<input id="profile-company-name" autocomplete="organization" maxlength="160" required></label>
+            <details class="password-change">
+              <summary>Modifier mon mot de passe</summary>
+              <p>Pour votre sécurité, indiquez votre mot de passe actuel avant d’en choisir un nouveau.</p>
+              <label>Mot de passe actuel<input id="profile-current-password" type="password" autocomplete="current-password" maxlength="128"></label>
+              <label>Nouveau mot de passe<input id="profile-new-password" type="password" autocomplete="new-password" minlength="12" maxlength="128"></label>
+              <small class="password-help">12 caractères minimum, avec une majuscule, une minuscule, un chiffre et un caractère spécial, sans espace.</small>
+            </details>
             <p id="profile-status" class="form-status" role="status"></p>
             <div class="account-actions"><button class="button button-small" type="submit">Enregistrer</button><button class="button button-ghost button-small" id="cancel-profile-button" type="button">Annuler</button></div>
           </form>
@@ -147,6 +155,6 @@
   </main>
 
   <footer><img src="assets/comptabridge-logo.png" alt="ComptaBridge"><p>ComptaBridge — Conversion bancaire locale vers OFX.</p><p><a href="legal/mentions-legales.html">Mentions légales</a> · <a href="legal/confidentialite.html">Confidentialité</a> · <a href="legal/cgv.html">CGV</a></p></footer>
-  <script src="compte.js?v=20261004-4"></script>
+  <script src="compte.js?v=20261004-5"></script>
 </body>
 </html>

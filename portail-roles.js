@@ -21,6 +21,15 @@
     return detail || fallback;
   }
 
+  function passwordIsStrong(password) {
+    return password.length >= 12
+      && /[a-z]/.test(password)
+      && /[A-Z]/.test(password)
+      && /\d/.test(password)
+      && /[^A-Za-z0-9]/.test(password)
+      && !/\s/.test(password);
+  }
+
   function goToLogin() {
     sessionStorage.removeItem(tokenKey);
     sessionStorage.removeItem(roleKey);
@@ -55,6 +64,16 @@
     document.querySelectorAll(".portal-preview-note").forEach((note) => {
       note.textContent = `Connecté en tant que ${displayName} · Les autorisations sont contrôlées par l’API.`;
       note.classList.add("portal-live-note");
+    });
+    const profileFields = {
+      "#portal-profile-first-name": firstName,
+      "#portal-profile-last-name": lastName,
+      "#portal-profile-company-name": profile.company_name || "",
+      "#portal-profile-email": profile.email || "",
+    };
+    Object.entries(profileFields).forEach(([selector, value]) => {
+      const input = document.querySelector(selector);
+      if (input) input.value = value;
     });
     sessionStorage.setItem(roleKey, profile.role || expectedRole);
   }
@@ -419,6 +438,59 @@
   });
 
   document.querySelectorAll("[data-logout]").forEach((button) => button.addEventListener("click", goToLogin));
+  const profileForm = document.querySelector("#portal-profile-form");
+  if (profileForm) profileForm.addEventListener("submit", async (event) => {
+    event.preventDefault();
+    const status = document.querySelector("#portal-profile-status");
+    const firstName = document.querySelector("#portal-profile-first-name")?.value.trim() || "";
+    const lastName = document.querySelector("#portal-profile-last-name")?.value.trim() || "";
+    const companyName = document.querySelector("#portal-profile-company-name")?.value.trim() || "";
+    const currentPassword = document.querySelector("#portal-profile-current-password")?.value || "";
+    const newPassword = document.querySelector("#portal-profile-new-password")?.value || "";
+    if (!firstName || !lastName || !companyName) {
+      status.textContent = "Renseigne ton prénom, ton nom et le nom de l’entreprise.";
+      status.classList.add("error");
+      return;
+    }
+    if (Boolean(currentPassword) !== Boolean(newPassword)) {
+      status.textContent = "Indique ton mot de passe actuel et le nouveau mot de passe.";
+      status.classList.add("error");
+      return;
+    }
+    if (newPassword && !passwordIsStrong(newPassword)) {
+      status.textContent = "Le nouveau mot de passe doit comporter 12 caractères, une majuscule, une minuscule, un chiffre et un caractère spécial, sans espace.";
+      status.classList.add("error");
+      return;
+    }
+    status.classList.remove("error");
+    status.textContent = "Enregistrement…";
+    const submit = profileForm.querySelector("button[type=submit]");
+    if (submit) submit.disabled = true;
+    try {
+      const response = await fetch(`${API}/auth/profile`, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+        body: JSON.stringify({
+          first_name: firstName,
+          last_name: lastName,
+          company_name: companyName,
+          current_password: currentPassword,
+          new_password: newPassword,
+        }),
+      });
+      const profile = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(apiError(profile, "Impossible de modifier le profil."));
+      renderProfile(profile);
+      document.querySelector("#portal-profile-current-password").value = "";
+      document.querySelector("#portal-profile-new-password").value = "";
+      status.textContent = "Profil enregistré avec succès.";
+    } catch (error) {
+      status.textContent = error.message;
+      status.classList.add("error");
+    } finally {
+      if (submit) submit.disabled = false;
+    }
+  });
   document.querySelectorAll("[data-refresh-portal]").forEach((button) => button.addEventListener("click", () => {
     loadDocuments();
     loadPortalClients();

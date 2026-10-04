@@ -18,6 +18,7 @@
         <a href="#clients">Clients</a>
         <a href="#comptables">Partenaires</a>
         <a href="#history">Historique</a>
+        <a href="#profile">Mon profil</a>
       </nav>
       <div class="portal-sidebar-foot"><span class="online-state"><i></i> Vérification…</span><a href="compte.html">Voir l’espace client</a><button class="portal-logout" data-logout type="button">Se déconnecter</button></div>
     </aside>
@@ -30,6 +31,18 @@
         <article><span>En cours</span><strong id="metric-processing">—</strong><small>Traitement commencé</small></article>
         <article><span>Disponibles</span><strong id="metric-ready">—</strong><small>En attente du client</small></article>
         <article><span>Terminées</span><strong id="metric-completed">—</strong><small>Traitement terminé</small></article>
+      </section>
+
+      <section class="portal-panel profile-settings-panel" id="profile">
+        <div class="portal-panel-head"><div><span class="eyebrow">Profil</span><h2>Vos informations</h2><p class="portal-panel-intro">Mettez à jour votre identité professionnelle et votre mot de passe.</p></div></div>
+        <form id="portal-profile-form" class="portal-profile-form">
+          <div class="form-columns"><label>Prénom<input id="portal-profile-first-name" autocomplete="given-name" maxlength="60" required></label><label>Nom<input id="portal-profile-last-name" autocomplete="family-name" maxlength="60" required></label></div>
+          <label>Nom de l’entreprise<input id="portal-profile-company-name" autocomplete="organization" maxlength="160" required></label>
+          <label>Adresse e-mail<input id="portal-profile-email" type="email" readonly></label>
+          <details class="password-change"><summary>Modifier mon mot de passe</summary><p>Votre mot de passe actuel est demandé avant de pouvoir le remplacer.</p><label>Mot de passe actuel<input id="portal-profile-current-password" type="password" autocomplete="current-password" maxlength="128"></label><label>Nouveau mot de passe<input id="portal-profile-new-password" type="password" autocomplete="new-password" minlength="12" maxlength="128"></label><small class="password-help">12 caractères minimum, avec une majuscule, une minuscule, un chiffre et un caractère spécial, sans espace.</small></details>
+          <p id="portal-profile-status" class="form-status" role="status"></p>
+          <button class="button" type="submit">Enregistrer les modifications <span>→</span></button>
+        </form>
       </section>
 
       <section class="portal-panel" id="documents">
@@ -48,6 +61,6 @@
       <p class="portal-preview-note">Prévisualisation locale — les rôles et autorisations seront contrôlés côté API avant la mise en ligne.</p>
     </main>
   </div>
-  <script src="portail-roles.js?v=20261004-5"></script>
+  <script src="portail-roles.js?v=20261004-8"></script>
 </body>
 </html>

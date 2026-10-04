@@ -124,6 +124,7 @@ function renderProfile(profile) {
   document.querySelector("#profile-email").textContent = profile.email || "—";
   document.querySelector("#profile-first-name").value = profile.first_name || "";
   document.querySelector("#profile-last-name").value = profile.last_name || "";
+  document.querySelector("#profile-company-name").value = profile.company_name || "";
   const initials = `${profile.first_name?.[0] || ""}${profile.last_name?.[0] || ""}`.toUpperCase();
   document.querySelector("#profile-avatar").textContent = initials || "CB";
 }
@@ -437,14 +438,37 @@ document.querySelector("#profile-form").addEventListener("submit", async (event)
   event.preventDefault();
   const status = document.querySelector("#profile-status");
   const token = sessionValue(keys.token);
+  const currentPassword = document.querySelector("#profile-current-password").value;
+  const newPassword = document.querySelector("#profile-new-password").value;
+  const companyName = document.querySelector("#profile-company-name").value.trim();
+  if (!companyName) {
+    setStatus(status, "Le nom de l’entreprise est requis.", true);
+    return;
+  }
+  if (Boolean(currentPassword) !== Boolean(newPassword)) {
+    setStatus(status, "Indiquez votre mot de passe actuel et le nouveau mot de passe.", true);
+    return;
+  }
+  if (newPassword && !motDePasseRobuste(newPassword)) {
+    setStatus(status, "Le nouveau mot de passe doit contenir 12 caractères, une majuscule, une minuscule, un chiffre et un caractère spécial, sans espace.", true);
+    return;
+  }
   setStatus(status, "Enregistrement…");
   try {
     const profile = await request("auth/profile", {
       method: "POST",
       headers: { Authorization: `Bearer ${token}` },
-      body: JSON.stringify({ first_name: document.querySelector("#profile-first-name").value.trim(), last_name: document.querySelector("#profile-last-name").value.trim() }),
+      body: JSON.stringify({
+        first_name: document.querySelector("#profile-first-name").value.trim(),
+        last_name: document.querySelector("#profile-last-name").value.trim(),
+        company_name: companyName,
+        current_password: currentPassword,
+        new_password: newPassword,
+      }),
     });
     saveProfile(profile);
+    document.querySelector("#profile-current-password").value = "";
+    document.querySelector("#profile-new-password").value = "";
     document.querySelector("#profile-form").hidden = true;
     document.querySelector("#profile-summary").hidden = false;
   } catch (error) { setStatus(status, error.message, true); }
