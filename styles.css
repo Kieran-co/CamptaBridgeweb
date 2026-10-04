@@ -500,7 +500,7 @@ footer img { width: 170px; }
 .password-help { color: #8097aa; font-size: .78rem; line-height: 1.45; margin-top: -7px; }
 .password-help.valid { color: #4bd889; }
 .portal-filters { display: flex; flex-wrap: wrap; gap: 6px; }
-.portal-filters button, .table-action { border: 1px solid #2f4d66; border-radius: 8px; background: transparent; color: #aac0d2; padding: 7px 10px; cursor: pointer; }
+.portal-filters button, .table-action { display: inline-flex; align-items: center; justify-content: center; border: 1px solid #2f4d66; border-radius: 8px; background: transparent; color: #aac0d2; padding: 7px 10px; cursor: pointer; white-space: nowrap; }
 .portal-filters button.active, .portal-filters button:hover, .table-action:hover { border-color: #2b8eff; color: #fff; background: rgba(25,118,233,.14); }
 .portal-table-wrap { max-height: 620px; overflow: auto; scrollbar-gutter: stable; overscroll-behavior: contain; border-radius: 10px; }
 .portal-table { width: 100%; border-collapse: collapse; min-width: 820px; }
@@ -510,6 +510,8 @@ footer img { width: 170px; }
 .portal-table td strong, .portal-table td small { display: block; }
 .portal-table td strong { color: #f2f7fb; }
 .portal-table td small { color: #7f97ac; }
+.portal-table-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; min-width: 230px; }
+.portal-table-actions .table-action { margin: 0; }
 .portal-table .table-action.danger { border-color: #87404a; color: #ffb4b4; }
 .portal-table .table-action.danger:hover { border-color: #ef4444; color: #fff; background: rgba(239,68,68,.16); }
 .portal-mini-workflow { display: grid; grid-template-columns: repeat(4, minmax(54px, 1fr)); gap: 3px; margin-top: 8px; min-width: 230px; }

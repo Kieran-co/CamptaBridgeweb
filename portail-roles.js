@@ -207,9 +207,9 @@
       const deleteAction = page === "administrator" ? `<button class="table-action danger" type="button" data-delete-id="${escapeHtml(document.document_id)}">Supprimer</button>` : "";
       const action = page === "administrator" ? `${statusAction}${facturxAction}${downloadAction}${deleteAction}` : `${clientFacturxAction}${accountantOriginalAction}${accountantWaiting}`;
       if (page === "accountant") {
-        return `<tr><td><strong>${escapeHtml(customer)}</strong><small>${escapeHtml(document.customer_email || "")}</small></td><td>${escapeHtml(document.name)}</td><td>${escapeHtml(date)}</td><td>${escapeHtml(document.reference || "—")}</td><td><span class="status-badge ${statusClasses[status] || ""}">${escapeHtml(label)}</span>${workflowMarkup(status)}</td><td>${action}</td></tr>`;
+        return `<tr><td><strong>${escapeHtml(customer)}</strong><small>${escapeHtml(document.customer_email || "")}</small></td><td>${escapeHtml(document.name)}</td><td>${escapeHtml(date)}</td><td>${escapeHtml(document.reference || "—")}</td><td><span class="status-badge ${statusClasses[status] || ""}">${escapeHtml(label)}</span>${workflowMarkup(status)}</td><td><div class="portal-table-actions">${action}</div></td></tr>`;
       }
-      return `<tr data-status="${escapeHtml(status)}"><td><strong>${escapeHtml(customer)}</strong><small>${escapeHtml(document.customer_email || "")}</small></td><td>${escapeHtml(document.name)}</td><td>${escapeHtml(date)}</td><td><span class="status-badge ${statusClasses[status] || ""}">${escapeHtml(label)}</span>${workflowMarkup(status)}</td><td>—</td><td>${action}</td></tr>`;
+      return `<tr data-status="${escapeHtml(status)}"><td><strong>${escapeHtml(customer)}</strong><small>${escapeHtml(document.customer_email || "")}</small></td><td>${escapeHtml(document.name)}</td><td>${escapeHtml(date)}</td><td><span class="status-badge ${statusClasses[status] || ""}">${escapeHtml(label)}</span>${workflowMarkup(status)}</td><td>—</td><td><div class="portal-table-actions">${action}</div></td></tr>`;
     }).join("");
     body.querySelectorAll("[data-download-id]").forEach((button) => button.addEventListener("click", async () => {
       button.disabled = true;
