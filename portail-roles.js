@@ -5,7 +5,7 @@
   const roleKey = "comptabridge_account_role";
   const page = document.body.classList.contains("accountant-portal") ? "accountant" : "administrator";
   const expectedRole = page === "accountant" ? "accountant" : "administrator";
-  const token = sessionStorage.getItem(tokenKey) || localStorage.getItem(tokenKey);
+  const token = sessionStorage.getItem(tokenKey);
 
   const escapeHtml = (value) => String(value ?? "").replace(/[&<>'"]/g, (character) => ({
     "&": "&amp;", "<": "&lt;", ">": "&gt;", "'": "&#39;", '"': "&quot;",

@@ -24,7 +24,7 @@ const invoiceStatuses = {
 let serverInvoices = null;
 
 function sessionValue(key) {
-  return sessionStorage.getItem(key) || localStorage.getItem(key) || "";
+  return sessionStorage.getItem(key) || "";
 }
 const nextInvoiceActions = {
   received: { label: "Commencer le traitement", next: "processing" },
@@ -73,7 +73,7 @@ function saveSession(data) {
   };
   Object.entries(values).forEach(([key, value]) => {
     sessionStorage.setItem(key, value);
-    localStorage.setItem(key, value);
+    localStorage.removeItem(key);
   });
 }
 
@@ -88,10 +88,12 @@ function redirectForRole(role) {
 }
 
 function clearSession() {
+  const account = sessionValue(keys.email).toLowerCase();
   Object.values(keys).forEach((key) => {
     sessionStorage.removeItem(key);
     localStorage.removeItem(key);
   });
+  if (account) localStorage.removeItem(invoiceStoragePrefix + account);
 }
 
 function currentProfile() {
@@ -109,7 +111,7 @@ function saveProfile(profile) {
   sessionStorage.setItem(keys.firstName, profile.first_name || "");
   sessionStorage.setItem(keys.lastName, profile.last_name || "");
   sessionStorage.setItem(keys.companyName, profile.company_name || "");
-  localStorage.setItem(keys.companyName, profile.company_name || "");
+  localStorage.removeItem(keys.companyName);
   sessionStorage.setItem(keys.role, profile.role || "client");
   renderProfile(profile);
 }
@@ -179,14 +181,16 @@ function actualiserAideMotDePasse() {
 function invoiceDrafts() {
   try {
     const account = sessionValue(keys.email) || "guest";
-    const drafts = JSON.parse(localStorage.getItem(invoiceStoragePrefix + account.toLowerCase()) || "[]");
+    const storageKey = invoiceStoragePrefix + account.toLowerCase();
+    localStorage.removeItem(storageKey);
+    const drafts = JSON.parse(sessionStorage.getItem(storageKey) || "[]");
     return Array.isArray(drafts) ? drafts : [];
   } catch { return []; }
 }
 
 function saveInvoiceDrafts(drafts) {
   const account = sessionValue(keys.email) || "guest";
-  localStorage.setItem(invoiceStoragePrefix + account.toLowerCase(), JSON.stringify(drafts));
+  sessionStorage.setItem(invoiceStoragePrefix + account.toLowerCase(), JSON.stringify(drafts));
 }
 
 function invoiceStatus(invoice) {
