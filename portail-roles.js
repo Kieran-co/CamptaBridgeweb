@@ -11,6 +11,16 @@
     "&": "&amp;", "<": "&lt;", ">": "&gt;", "'": "&#39;", '"': "&quot;",
   })[character]);
 
+  function apiError(data, fallback) {
+    const detail = data?.detail;
+    if (Array.isArray(detail)) {
+      const messages = detail.map((item) => item?.msg || item?.message || item).filter(Boolean);
+      if (messages.length) return messages.join(" · ");
+    }
+    if (detail && typeof detail === "object") return detail.message || detail.msg || fallback;
+    return detail || fallback;
+  }
+
   function goToLogin() {
     sessionStorage.removeItem(tokenKey);
     sessionStorage.removeItem(roleKey);
@@ -93,7 +103,7 @@
       body: form,
     });
     const data = await response.json().catch(() => ({}));
-    if (!response.ok) throw new Error(data.detail || "Dépôt du document impossible.");
+    if (!response.ok) throw new Error(apiError(data, "Dépôt du document impossible."));
     return data.document;
   }
 
@@ -104,7 +114,7 @@
       body: JSON.stringify({ company_name: companyName, email }),
     });
     const data = await response.json().catch(() => ({}));
-    if (!response.ok) throw new Error(data.detail || "Impossible d’ajouter ce client.");
+    if (!response.ok) throw new Error(apiError(data, "Impossible d’ajouter ce client."));
     return data.client;
   }
 
@@ -113,7 +123,7 @@
     form.append("file", file);
     const response = await fetch(`${API}/portal/documents/${encodeURIComponent(documentId)}/facturx`, { method: "POST", headers: { Authorization: `Bearer ${token}` }, body: form });
     const data = await response.json().catch(() => ({}));
-    if (!response.ok) throw new Error(data.detail || "Dépôt du Factur-X impossible.");
+    if (!response.ok) throw new Error(apiError(data, "Dépôt du Factur-X impossible."));
   }
 
   // Les statuts normaux sont déclenchés par les actions réelles :
@@ -128,7 +138,7 @@
       method: "PATCH", headers: { Authorization: `Bearer ${token}` },
     });
     const data = await response.json().catch(() => ({}));
-    if (!response.ok) throw new Error(data.detail || "Impossible de mettre à jour le statut.");
+    if (!response.ok) throw new Error(apiError(data, "Impossible de mettre à jour le statut."));
     return data.document;
   }
 
@@ -293,7 +303,7 @@
     try {
       const response = await fetch(`${API}/portal/documents`, { headers: { Authorization: `Bearer ${token}` } });
       const data = await response.json().catch(() => ({}));
-      if (!response.ok) throw new Error(data.detail || "Impossible de charger les documents.");
+      if (!response.ok) throw new Error(apiError(data, "Impossible de charger les documents."));
       renderDocuments(Array.isArray(data.documents) ? data.documents : []);
     } catch (error) {
       const body = document.querySelector("#portal-documents-body");
@@ -310,7 +320,7 @@
     try {
       const response = await fetch(`${API}/portal/clients`, { headers: { Authorization: `Bearer ${token}` } });
       const data = await response.json().catch(() => ({}));
-      if (!response.ok) throw new Error(data.detail || "Impossible de charger les clients.");
+      if (!response.ok) throw new Error(apiError(data, "Impossible de charger les clients."));
       const clients = Array.isArray(data.clients) ? data.clients : [];
       if (select) select.innerHTML = clients.length
         ? `<option value="">Choisir un client…</option>${clients.map((client) => {
@@ -332,7 +342,7 @@
     try {
       const response = await fetch(`${API}/portal/accountant-requests`, { headers: { Authorization: `Bearer ${token}` } });
       const data = await response.json().catch(() => ({}));
-      if (!response.ok) throw new Error(data.detail || "Impossible de charger les demandes.");
+      if (!response.ok) throw new Error(apiError(data, "Impossible de charger les demandes."));
       const requests = Array.isArray(data.requests) ? data.requests : [];
       list.innerHTML = requests.length ? requests.map((item) => `<div><span class="portal-avatar green">${escapeHtml(`${item.first_name?.[0] || ""}${item.last_name?.[0] || ""}`.toUpperCase() || "C")}</span><p><strong>${escapeHtml([item.first_name, item.last_name].filter(Boolean).join(" ") || item.email)}</strong><small>${escapeHtml(item.email)}</small></p><button class="table-action" data-approve-accountant="${escapeHtml(item.customer_id)}" type="button">Approuver</button></div>`).join("") : `<div class="portal-empty-mini"><strong>Aucune demande en attente</strong><span>Les nouvelles demandes comptables apparaîtront ici.</span></div>`;
       list.querySelectorAll("[data-approve-accountant]").forEach((button) => button.addEventListener("click", async () => {
