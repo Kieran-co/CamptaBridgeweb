@@ -1,0 +1,13 @@
+@import url('../styles.css');
+.legal-shell { width: min(calc(100% - 40px), 920px); margin: 0 auto; padding: 72px 0 90px; }
+.legal-shell h1 { font-size: clamp(2.2rem, 5vw, 4rem); margin: 18px 0 12px; letter-spacing: -.04em; }
+.legal-shell h2 { margin: 42px 0 12px; font-size: 1.45rem; }
+.legal-shell h3 { margin: 24px 0 8px; }
+.legal-shell p, .legal-shell li { color: var(--muted); line-height: 1.75; }
+.legal-shell ul, .legal-shell ol { padding-left: 1.4rem; }
+.legal-shell a { color: #78b8ff; }
+.legal-note { padding: 18px 20px; border: 1px solid #8a6b26; border-radius: 12px; background: rgba(138,107,38,.12); color: #f5d889; }
+.legal-nav { display:flex; justify-content:space-between; align-items:center; gap:20px; padding:20px max(20px, calc((100% - 920px)/2)); border-bottom:1px solid #203448; }
+.legal-nav img { width: 170px; }
+.legal-nav a { color:#d7e5f5; text-decoration:none; }
+@media (max-width:700px) { .legal-shell { width:min(calc(100% - 24px), 920px); padding-top:48px; } .legal-nav { padding-inline:12px; } }

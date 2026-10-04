@@ -1,0 +1,153 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Espace client ComptaBridge : profil, licences et téléchargement.">
+  <meta name="robots" content="noindex,nofollow">
+  <title>Espace client — ComptaBridge</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body class="account-page">
+  <header class="nav account-nav">
+    <a class="brand" href="index.html" aria-label="Accueil ComptaBridge"><img src="assets/comptabridge-logo.png" alt="ComptaBridge"></a>
+    <nav aria-label="Navigation principale"><a href="index.html">Retour au site</a><a class="button button-small" href="index.html#offres">Découvrir les offres</a></nav>
+  </header>
+
+  <main class="account-shell">
+    <section id="guest-view" class="auth-layout">
+      <div class="auth-showcase">
+        <span class="eyebrow"><span></span> Espace client sécurisé</span>
+        <h1>Votre activité,<br><em>au même endroit.</em></h1>
+        <p>Retrouvez vos licences, votre logiciel et bientôt vos factures dans un espace simple et confidentiel.</p>
+        <ul class="auth-benefits">
+          <li><b>Vos licences</b><span>Consultez vos droits et leurs dates de validité.</span></li>
+          <li><b>Toujours à jour</b><span>Téléchargez la dernière version de ComptaBridge.</span></li>
+          <li><b>Données protégées</b><span>Aucun relevé bancaire n’est envoyé depuis cet espace.</span></li>
+        </ul>
+      </div>
+
+      <div class="auth-panel">
+        <section id="login-view" class="auth-view">
+          <span class="auth-kicker">Bienvenue</span>
+          <h2>Connectez-vous</h2>
+          <p>Accédez à votre espace ComptaBridge.</p>
+          <form id="login-form" class="account-form">
+            <label for="login-email">Adresse e-mail</label>
+            <input id="login-email" type="email" autocomplete="email" required placeholder="vous@exemple.fr">
+            <label for="login-password">Mot de passe</label>
+            <input id="login-password" type="password" autocomplete="current-password" minlength="10" required placeholder="Votre mot de passe">
+            <p id="login-status" class="form-status" role="status"></p>
+            <button class="button auth-primary" type="submit">Se connecter <span>→</span></button>
+          </form>
+          <button class="text-button" id="show-reset" type="button">Mot de passe oublié ?</button>
+          <div class="auth-separator"><span>Première visite ?</span></div>
+          <button class="button button-ghost auth-secondary" id="show-register" type="button">Créer mon compte</button>
+        </section>
+
+        <section id="register-view" class="auth-view" hidden>
+          <button class="auth-back" data-auth-view="login-view" type="button">← Retour à la connexion</button>
+          <span class="auth-kicker">Nouveau compte</span>
+          <h2>Bienvenue chez ComptaBridge</h2>
+          <p>Créez votre espace personnel en quelques secondes.</p>
+          <form id="register-form" class="account-form">
+            <div class="form-columns">
+              <label>Prénom<input id="register-first-name" autocomplete="given-name" maxlength="60" required placeholder="Votre prénom"></label>
+              <label>Nom<input id="register-last-name" autocomplete="family-name" maxlength="60" required placeholder="Votre nom"></label>
+            </div>
+            <label for="register-email">Adresse e-mail</label>
+            <input id="register-email" type="email" autocomplete="email" required placeholder="vous@exemple.fr">
+            <label for="register-role">Type d’espace</label>
+            <select id="register-role"><option value="client">Espace client</option><option value="accountant">Espace comptable — validation requise</option></select>
+            <label for="register-password">Mot de passe</label>
+            <input id="register-password" type="password" autocomplete="new-password" minlength="10" required placeholder="10 caractères minimum">
+            <label for="register-confirm">Confirmer le mot de passe</label>
+            <input id="register-confirm" type="password" autocomplete="new-password" minlength="10" required placeholder="Répétez votre mot de passe">
+            <p id="register-status" class="form-status" role="status"></p>
+            <button class="button auth-primary" type="submit">Créer mon espace <span>→</span></button>
+          </form>
+          <p class="account-note">En créant votre compte, vous acceptez les conditions d’utilisation de ComptaBridge.</p>
+        </section>
+
+        <section id="reset-view" class="auth-view" hidden>
+          <button class="auth-back" data-auth-view="login-view" type="button">← Retour à la connexion</button>
+          <span class="auth-kicker">Accès au compte</span>
+          <h2>Mot de passe oublié ?</h2>
+          <p>Saisissez votre adresse. Si un compte existe, nous vous enverrons un lien valable 30 minutes.</p>
+          <form id="reset-form" class="account-form">
+            <label for="reset-email">Adresse e-mail</label>
+            <input id="reset-email" type="email" autocomplete="email" required placeholder="vous@exemple.fr">
+            <p id="reset-status" class="form-status" role="status"></p>
+            <button class="button auth-primary" type="submit">Recevoir le lien <span>→</span></button>
+          </form>
+        </section>
+      </div>
+    </section>
+
+    <section id="dashboard-view" class="account-dashboard" hidden>
+      <div class="dashboard-heading">
+        <div><span class="eyebrow"><span></span> Espace client</span><h1>Bonjour, <strong id="account-name"></strong></h1><p>Voici l’essentiel de votre compte ComptaBridge.</p></div>
+        <button class="button button-ghost" id="logout-button" type="button">Se déconnecter</button>
+      </div>
+
+      <div class="dashboard-summary">
+        <div><span>Compte</span><strong id="summary-email">—</strong></div>
+        <div><span>Licences liées</span><strong id="license-count">—</strong></div>
+        <div><span>Service</span><strong class="online-state"><i></i> Opérationnel</strong></div>
+      </div>
+
+      <div class="dashboard-grid">
+        <article class="dashboard-card invoice-card wide">
+          <div class="card-heading">
+            <div><span class="eyebrow">Nouveau · espace factures</span><h2>Déposer une facture</h2></div>
+            <span class="status-badge status-badge-muted">Préparation</span>
+          </div>
+          <p>Déposez ici une facture papier numérisée, un PDF ou une image. Le document est transmis de façon sécurisée et sera vérifié avant la génération du Factur-X.</p>
+          <form id="invoice-upload-form" class="invoice-upload-form">
+            <label class="upload-dropzone" for="invoice-file">
+              <span class="upload-icon" aria-hidden="true">↑</span>
+              <strong id="invoice-file-label">Déposer un fichier</strong>
+              <span id="invoice-file-name" class="upload-file-name">Aucun fichier sélectionné</span>
+              <span>PDF, JPG, PNG · 10 Mo maximum</span>
+              <input id="invoice-file" type="file" accept="application/pdf,image/jpeg,image/png">
+            </label>
+            <div class="invoice-fields">
+              <label>Référence (optionnel)<input id="invoice-reference" maxlength="80" placeholder="Ex. Facture fournisseur - septembre"></label>
+              <label>Commentaire (optionnel)<textarea id="invoice-comment" rows="2" maxlength="400" placeholder="Une précision pour le traitement ?"></textarea></label>
+            </div>
+            <p id="invoice-upload-status" class="form-status" role="status"></p>
+            <button class="button button-small" type="submit">Ajouter à la file de traitement <span>→</span></button>
+          </form>
+          <p class="portal-note"><span aria-hidden="true">i</span> Vos documents sont conservés sur le stockage sécurisé ComptaBridge. Leur traitement et leur statut sont gérés par l’équipe ComptaBridge.</p>
+        </article>
+
+        <article class="dashboard-card invoice-card wide">
+          <div class="card-heading"><div><span class="eyebrow">Suivi des documents</span><h2>Mes factures</h2></div><button class="text-button" id="clear-invoices-button" type="button">Vider les brouillons</button></div>
+          <div id="invoice-list" class="invoice-list"><div class="empty-state"><b>Aucune facture déposée</b><span>Les documents envoyés apparaîtront ici avec leur statut.</span></div></div>
+        </article>
+
+        <article class="dashboard-card profile-card">
+          <div class="card-heading"><div><span class="eyebrow">Profil</span><h2>Vos informations</h2></div><button class="text-button" id="edit-profile-button" type="button">Modifier</button></div>
+          <div id="profile-summary" class="profile-summary"><div class="profile-avatar" id="profile-avatar">CB</div><div><strong id="profile-name">Profil à compléter</strong><span id="profile-email">—</span></div></div>
+          <form id="profile-form" class="account-form compact-form" hidden>
+            <div class="form-columns">
+              <label>Prénom<input id="profile-first-name" maxlength="60" required></label>
+              <label>Nom<input id="profile-last-name" maxlength="60" required></label>
+            </div>
+            <p id="profile-status" class="form-status" role="status"></p>
+            <div class="account-actions"><button class="button button-small" type="submit">Enregistrer</button><button class="button button-ghost button-small" id="cancel-profile-button" type="button">Annuler</button></div>
+          </form>
+        </article>
+
+        <article class="dashboard-card license-card wide"><div class="card-heading"><div><span class="eyebrow">Licences</span><h2>Vos licences ComptaBridge</h2></div><button class="text-button" id="refresh-button" type="button">Actualiser</button></div><div id="licenses" class="license-list"><p class="muted">Chargement…</p></div></article>
+        <article class="dashboard-card action-card"><span class="card-icon">↓</span><span class="eyebrow">Logiciel</span><h2>Télécharger ComptaBridge</h2><p>Installez la dernière version stable et consultez ses nouveautés.</p><a class="button" href="https://github.com/Kieran-co/ComptaBridge-Releases/releases/latest" target="_blank" rel="noopener">Télécharger la dernière version</a></article>
+        <article class="dashboard-card action-card"><span class="card-icon billing-icon">€</span><span class="eyebrow">Facturation</span><h2>Factures et abonnement</h2><p>Votre historique et le portail Stripe seront disponibles à l’ouverture commerciale.</p><span class="status-badge">Bientôt disponible</span></article>
+        <article class="dashboard-card support-card wide"><div><span class="eyebrow">Besoin d’aide ?</span><h2>Nous sommes là pour vous accompagner.</h2><p>Une question sur une licence, votre compte ou une conversion bancaire ?</p></div><a class="button button-ghost" href="mailto:support@comptabridge.fr">Contacter le support</a></article>
+      </div>
+    </section>
+  </main>
+
+  <footer><img src="assets/comptabridge-logo.png" alt="ComptaBridge"><p>ComptaBridge — Conversion bancaire locale vers OFX.</p><p><a href="legal/mentions-legales.html">Mentions légales</a> · <a href="legal/confidentialite.html">Confidentialité</a> · <a href="legal/cgv.html">CGV</a></p></footer>
+  <script src="compte.js?v=20261004-2"></script>
+</body>
+</html>
