@@ -118,6 +118,17 @@
     return data.client;
   }
 
+  async function updateManagedClientEmail(customerId, email) {
+    const response = await fetch(`${API}/portal/clients/${encodeURIComponent(customerId)}`, {
+      method: "PATCH",
+      headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+      body: JSON.stringify({ email }),
+    });
+    const data = await response.json().catch(() => ({}));
+    if (!response.ok) throw new Error(apiError(data, "Impossible d’associer cette adresse e-mail."));
+    return data.client;
+  }
+
   async function uploadFacturx(documentId, file) {
     const form = new FormData();
     form.append("file", file);
@@ -277,10 +288,25 @@
       const contact = [client.first_name, client.last_name].filter(Boolean).join(" ");
       const initials = company.split(/\s+/).map((part) => part[0]).join("").slice(0, 2).toUpperCase();
       const contactLine = contact || client.email || "Compte client à créer";
-      const stateLabel = client.pending_account ? "À inviter" : "Autorisé";
+      const stateLabel = client.pending_account ? (client.email ? "En attente d’inscription" : "À inviter") : "Autorisé";
       const stateClass = client.pending_account ? "status-badge-received" : "status-badge-completed";
-      return `<div><span class="portal-avatar">${escapeHtml(initials || "CL")}</span><p><strong>${escapeHtml(company)}</strong><small>${escapeHtml(contactLine)}</small></p><span class="status-badge ${stateClass}">${stateLabel}</span></div>`;
+      const action = client.pending_account && !client.email
+        ? `<button class="table-action" type="button" data-associate-client="${escapeHtml(client.customer_id)}">Associer un e-mail</button>`
+        : "";
+      return `<div><span class="portal-avatar">${escapeHtml(initials || "CL")}</span><p><strong>${escapeHtml(company)}</strong><small>${escapeHtml(contactLine)}</small></p>${action}<span class="status-badge ${stateClass}">${stateLabel}</span></div>`;
     }).join("");
+    list.querySelectorAll("[data-associate-client]").forEach((button) => button.addEventListener("click", async () => {
+      const email = window.prompt("Adresse e-mail du client à rattacher :", "");
+      if (!email?.trim()) return;
+      button.disabled = true;
+      try {
+        await updateManagedClientEmail(button.dataset.associateClient, email.trim());
+        await loadPortalClients();
+      } catch (error) {
+        alert(error.message);
+        button.disabled = false;
+      }
+    }));
   }
 
   function renderAccountantDownloads(documents) {
