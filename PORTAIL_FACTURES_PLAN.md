@@ -19,9 +19,9 @@ La page `compte.html` contient désormais la zone de dépôt, les métadonnées 
 
 - `compte.html` : espace client, dépôt et récupération de ses propres documents.
 - `administration.html` : espace du prestataire, vision globale, traitement, attribution et gestion des accès.
-- `comptable.html` : espace partenaire limité aux entreprises explicitement attribuées.
+- `comptable.html` : espace partenaires limité aux entreprises explicitement attribuées.
 
-Les pages administrateur et comptable sont des prévisualisations locales. L'API doit fournir le rôle du compte et vérifier chaque autorisation côté serveur ; masquer une page dans le navigateur ne constitue pas une protection.
+Les pages administrateur et partenaires sont des prévisualisations locales. L'API doit fournir le rôle du compte et vérifier chaque autorisation côté serveur ; masquer une page dans le navigateur ne constitue pas une protection.
 
 ## API à brancher avant mise en production
 

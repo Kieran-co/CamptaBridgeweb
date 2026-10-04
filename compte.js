@@ -4,6 +4,7 @@ const keys = {
   email: "comptabridge_account_email",
   firstName: "comptabridge_account_first_name",
   lastName: "comptabridge_account_last_name",
+  companyName: "comptabridge_account_company_name",
   role: "comptabridge_account_role",
 };
 
@@ -67,6 +68,7 @@ function saveSession(data) {
     [keys.email]: data.email || "",
     [keys.firstName]: data.first_name || "",
     [keys.lastName]: data.last_name || "",
+    [keys.companyName]: data.company_name || "",
     [keys.role]: data.role || "client",
   };
   Object.entries(values).forEach(([key, value]) => {
@@ -97,6 +99,7 @@ function currentProfile() {
     email: sessionValue(keys.email),
     first_name: sessionValue(keys.firstName),
     last_name: sessionValue(keys.lastName),
+    company_name: sessionValue(keys.companyName),
     role: sessionValue(keys.role) || "client",
   };
 }
@@ -105,6 +108,8 @@ function saveProfile(profile) {
   sessionStorage.setItem(keys.email, profile.email || "");
   sessionStorage.setItem(keys.firstName, profile.first_name || "");
   sessionStorage.setItem(keys.lastName, profile.last_name || "");
+  sessionStorage.setItem(keys.companyName, profile.company_name || "");
+  localStorage.setItem(keys.companyName, profile.company_name || "");
   sessionStorage.setItem(keys.role, profile.role || "client");
   renderProfile(profile);
 }
@@ -115,6 +120,7 @@ function renderProfile(profile) {
   document.querySelector("#account-name").textContent = greeting;
   document.querySelector("#summary-email").textContent = profile.email || "—";
   document.querySelector("#profile-name").textContent = fullName || "Profil à compléter";
+  document.querySelector("#profile-company").textContent = profile.company_name || "Société non renseignée";
   document.querySelector("#profile-email").textContent = profile.email || "—";
   document.querySelector("#profile-first-name").value = profile.first_name || "";
   document.querySelector("#profile-last-name").value = profile.last_name || "";
@@ -147,6 +153,26 @@ function showDashboard() {
   loadProfile();
   renderInvoices();
   loadInvoices();
+}
+
+function motDePasseRobuste(password) {
+  return password.length >= 12
+    && /[a-z]/.test(password)
+    && /[A-Z]/.test(password)
+    && /[0-9]/.test(password)
+    && /[^A-Za-z0-9]/.test(password)
+    && !/\s/.test(password);
+}
+
+function actualiserAideMotDePasse() {
+  const password = document.querySelector("#register-password");
+  const help = document.querySelector("#register-password-help");
+  if (!password || !help) return;
+  const valide = motDePasseRobuste(password.value);
+  help.textContent = valide
+    ? "Mot de passe robuste."
+    : "12 caractères minimum, avec une majuscule, une minuscule, un chiffre et un caractère spécial, sans espace.";
+  help.classList.toggle("valid", valide);
 }
 
 function invoiceDrafts() {
@@ -359,6 +385,16 @@ document.querySelector("#register-form").addEventListener("submit", async (event
   event.preventDefault();
   const status = document.querySelector("#register-status");
   const password = document.querySelector("#register-password").value;
+  const companyName = document.querySelector("#register-company-name").value.trim();
+  if (!companyName) {
+    setStatus(status, "Le nom de la société est requis.", true);
+    return;
+  }
+  if (!motDePasseRobuste(password)) {
+    setStatus(status, "Choisissez un mot de passe robuste : 12 caractères, une majuscule, une minuscule, un chiffre et un caractère spécial, sans espace.", true);
+    actualiserAideMotDePasse();
+    return;
+  }
   if (password !== document.querySelector("#register-confirm").value) {
     setStatus(status, "Les mots de passe ne correspondent pas.", true);
     return;
@@ -370,6 +406,7 @@ document.querySelector("#register-form").addEventListener("submit", async (event
       body: JSON.stringify({
         first_name: document.querySelector("#register-first-name").value.trim(),
         last_name: document.querySelector("#register-last-name").value.trim(),
+        company_name: companyName,
         email: document.querySelector("#register-email").value.trim(),
         password,
         requested_role: document.querySelector("#register-role").value,
@@ -377,7 +414,7 @@ document.querySelector("#register-form").addEventListener("submit", async (event
     });
     saveSession(data);
     if (data.role === "accountant_pending") {
-      setStatus(status, "Votre demande comptable est enregistrée. Elle sera active après validation de l’administrateur.");
+      setStatus(status, "Votre demande de partenaire est enregistrée. Elle sera active après validation de l’administrateur.");
     }
     if (!redirectForRole(data.role)) showDashboard();
   } catch (error) { setStatus(status, error.message, true); }
@@ -414,6 +451,7 @@ document.querySelector("#profile-form").addEventListener("submit", async (event)
 });
 
 document.querySelector("#show-register").addEventListener("click", () => showAuthView("register-view"));
+document.querySelector("#register-password")?.addEventListener("input", actualiserAideMotDePasse);
 document.querySelector("#show-reset").addEventListener("click", () => {
   document.querySelector("#reset-email").value = document.querySelector("#login-email").value;
   showAuthView("reset-view");

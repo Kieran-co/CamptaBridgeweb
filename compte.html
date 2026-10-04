@@ -55,14 +55,17 @@
               <label>Prénom<input id="register-first-name" autocomplete="given-name" maxlength="60" required placeholder="Votre prénom"></label>
               <label>Nom<input id="register-last-name" autocomplete="family-name" maxlength="60" required placeholder="Votre nom"></label>
             </div>
+            <label for="register-company-name">Nom de la société</label>
+            <input id="register-company-name" autocomplete="organization" maxlength="160" required placeholder="Ex. SAS Martin &amp; Fils">
             <label for="register-email">Adresse e-mail</label>
             <input id="register-email" type="email" autocomplete="email" required placeholder="vous@exemple.fr">
             <label for="register-role">Type d’espace</label>
-            <select id="register-role"><option value="client">Espace client</option><option value="accountant">Espace comptable — validation requise</option></select>
+            <select id="register-role"><option value="client">Espace client</option><option value="accountant">Espace partenaires — validation requise</option></select>
             <label for="register-password">Mot de passe</label>
-            <input id="register-password" type="password" autocomplete="new-password" minlength="10" required placeholder="10 caractères minimum">
+            <input id="register-password" type="password" autocomplete="new-password" minlength="12" required placeholder="12 caractères minimum">
+            <small id="register-password-help" class="password-help">12 caractères minimum, avec une majuscule, une minuscule, un chiffre et un caractère spécial, sans espace.</small>
             <label for="register-confirm">Confirmer le mot de passe</label>
-            <input id="register-confirm" type="password" autocomplete="new-password" minlength="10" required placeholder="Répétez votre mot de passe">
+            <input id="register-confirm" type="password" autocomplete="new-password" minlength="12" required placeholder="Répétez votre mot de passe">
             <p id="register-status" class="form-status" role="status"></p>
             <button class="button auth-primary" type="submit">Créer mon espace <span>→</span></button>
           </form>
@@ -127,7 +130,7 @@
 
         <article class="dashboard-card profile-card">
           <div class="card-heading"><div><span class="eyebrow">Profil</span><h2>Vos informations</h2></div><button class="text-button" id="edit-profile-button" type="button">Modifier</button></div>
-          <div id="profile-summary" class="profile-summary"><div class="profile-avatar" id="profile-avatar">CB</div><div><strong id="profile-name">Profil à compléter</strong><span id="profile-email">—</span></div></div>
+          <div id="profile-summary" class="profile-summary"><div class="profile-avatar" id="profile-avatar">CB</div><div><strong id="profile-name">Profil à compléter</strong><span id="profile-company">Société non renseignée</span><span id="profile-email">—</span></div></div>
           <form id="profile-form" class="account-form compact-form" hidden>
             <div class="form-columns">
               <label>Prénom<input id="profile-first-name" maxlength="60" required></label>
@@ -144,6 +147,6 @@
   </main>
 
   <footer><img src="assets/comptabridge-logo.png" alt="ComptaBridge"><p>ComptaBridge — Conversion bancaire locale vers OFX.</p><p><a href="legal/mentions-legales.html">Mentions légales</a> · <a href="legal/confidentialite.html">Confidentialité</a> · <a href="legal/cgv.html">CGV</a></p></footer>
-  <script src="compte.js?v=20261004-3"></script>
+  <script src="compte.js?v=20261004-4"></script>
 </body>
 </html>

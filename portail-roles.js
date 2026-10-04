@@ -1,4 +1,4 @@
-/* Liaison commune des espaces administration/comptable avec la session API. */
+/* Liaison commune des espaces administration/partenaires avec la session API. */
 (() => {
   const API = "https://api.comptabridge.fr/api/v1";
   const tokenKey = "comptabridge_account_token";
@@ -370,7 +370,7 @@
       const data = await response.json().catch(() => ({}));
       if (!response.ok) throw new Error(apiError(data, "Impossible de charger les demandes."));
       const requests = Array.isArray(data.requests) ? data.requests : [];
-      list.innerHTML = requests.length ? requests.map((item) => `<div><span class="portal-avatar green">${escapeHtml(`${item.first_name?.[0] || ""}${item.last_name?.[0] || ""}`.toUpperCase() || "C")}</span><p><strong>${escapeHtml([item.first_name, item.last_name].filter(Boolean).join(" ") || item.email)}</strong><small>${escapeHtml(item.email)}</small></p><button class="table-action" data-approve-accountant="${escapeHtml(item.customer_id)}" type="button">Approuver</button></div>`).join("") : `<div class="portal-empty-mini"><strong>Aucune demande en attente</strong><span>Les nouvelles demandes comptables apparaîtront ici.</span></div>`;
+      list.innerHTML = requests.length ? requests.map((item) => `<div><span class="portal-avatar green">${escapeHtml(`${item.first_name?.[0] || ""}${item.last_name?.[0] || ""}`.toUpperCase() || "P")}</span><p><strong>${escapeHtml([item.first_name, item.last_name].filter(Boolean).join(" ") || item.email)}</strong><small>${escapeHtml(item.email)}</small></p><button class="table-action" data-approve-accountant="${escapeHtml(item.customer_id)}" type="button">Approuver</button></div>`).join("") : `<div class="portal-empty-mini"><strong>Aucune demande en attente</strong><span>Les nouvelles demandes de partenaires apparaîtront ici.</span></div>`;
       list.querySelectorAll("[data-approve-accountant]").forEach((button) => button.addEventListener("click", async () => {
         button.disabled = true;
         try {
