@@ -460,7 +460,15 @@ footer img { width: 170px; }
 .portal-topbar p { margin: 0; color: var(--muted); }
 .portal-metrics { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 14px; margin-bottom: 20px; }
 .portal-metrics.accountant-metrics { grid-template-columns: repeat(3, minmax(0, 1fr)); }
-.portal-metrics article { min-height: 132px; padding: 22px; border: 1px solid #29445f; border-radius: 16px; background: linear-gradient(145deg, rgba(17,35,56,.92), rgba(8,20,32,.98)); }
+.portal-metrics article { min-height: 132px; padding: 22px; border: 1px solid #29445f; border-radius: 16px; background: linear-gradient(145deg, rgba(17,35,56,.92), rgba(8,20,32,.98)); transition: border-color .2s ease, background .2s ease, box-shadow .2s ease; }
+.portal-metrics article.metric-warning { border-color: #a16207; background: linear-gradient(145deg, rgba(83,55,17,.48), rgba(29,27,20,.96)); box-shadow: 0 0 0 1px rgba(245,158,11,.12), 0 12px 30px rgba(245,158,11,.08); }
+.portal-metrics article.metric-danger { border-color: #b91c1c; background: linear-gradient(145deg, rgba(91,29,35,.54), rgba(31,18,25,.96)); box-shadow: 0 0 0 1px rgba(239,68,68,.14), 0 12px 30px rgba(239,68,68,.1); }
+.portal-metrics article.metric-ready { border-color: #2563eb; background: linear-gradient(145deg, rgba(23,55,104,.54), rgba(9,24,43,.98)); }
+.portal-metrics article.metric-success { border-color: #2e7658; background: linear-gradient(145deg, rgba(19,65,48,.48), rgba(8,25,26,.98)); }
+.portal-metrics article.metric-warning span, .portal-metrics article.metric-warning strong { color: #fbbf24; }
+.portal-metrics article.metric-danger span, .portal-metrics article.metric-danger strong { color: #fca5a5; }
+.portal-metrics article.metric-ready span, .portal-metrics article.metric-ready strong { color: #93c5fd; }
+.portal-metrics article.metric-success span, .portal-metrics article.metric-success strong { color: #6ee7a0; }
 .portal-metrics span, .portal-metrics small { display: block; color: #8fa5b9; }
 .portal-metrics strong { display: block; margin: 9px 0 1px; font-size: 2.15rem; line-height: 1; }
 .portal-metrics small { font-size: .77rem; }
@@ -494,14 +502,16 @@ footer img { width: 170px; }
 .portal-filters { display: flex; flex-wrap: wrap; gap: 6px; }
 .portal-filters button, .table-action { border: 1px solid #2f4d66; border-radius: 8px; background: transparent; color: #aac0d2; padding: 7px 10px; cursor: pointer; }
 .portal-filters button.active, .portal-filters button:hover, .table-action:hover { border-color: #2b8eff; color: #fff; background: rgba(25,118,233,.14); }
-.portal-table-wrap { overflow-x: auto; }
+.portal-table-wrap { max-height: 620px; overflow: auto; scrollbar-gutter: stable; overscroll-behavior: contain; border-radius: 10px; }
 .portal-table { width: 100%; border-collapse: collapse; min-width: 820px; }
-.portal-table th { padding: 10px 12px; color: #7890a5; text-align: left; font-size: .72rem; text-transform: uppercase; letter-spacing: .09em; border-bottom: 1px solid #29445f; }
+.portal-table th { position: sticky; top: 0; z-index: 1; padding: 10px 12px; color: #7890a5; text-align: left; font-size: .72rem; text-transform: uppercase; letter-spacing: .09em; border-bottom: 1px solid #29445f; background: #0d2133; }
 .portal-table td { padding: 15px 12px; color: #c6d4df; border-bottom: 1px solid rgba(41,68,95,.68); font-size: .87rem; }
 .portal-table tbody tr:last-child td { border-bottom: 0; }
 .portal-table td strong, .portal-table td small { display: block; }
 .portal-table td strong { color: #f2f7fb; }
 .portal-table td small { color: #7f97ac; }
+.portal-table .table-action.danger { border-color: #87404a; color: #ffb4b4; }
+.portal-table .table-action.danger:hover { border-color: #ef4444; color: #fff; background: rgba(239,68,68,.16); }
 .portal-mini-workflow { display: grid; grid-template-columns: repeat(4, minmax(54px, 1fr)); gap: 3px; margin-top: 8px; min-width: 230px; }
 .portal-mini-workflow span { padding-top: 4px; border-top: 2px solid #27435a; color: #6f879b; font-size: .62rem; white-space: nowrap; }
 .portal-mini-workflow span.done { border-color: #2e7658; color: #75d99b; }
@@ -541,6 +551,7 @@ footer img { width: 170px; }
   .portal-topbar { align-items: start; flex-direction: column; }
   .portal-metrics, .portal-metrics.accountant-metrics, .portal-columns { grid-template-columns: 1fr; }
   .portal-panel { padding: 18px; }
+  .portal-table-wrap { max-height: 500px; }
   .portal-panel-head { flex-direction: column; }
   .accountant-upload-form { grid-template-columns: 1fr; }
 }

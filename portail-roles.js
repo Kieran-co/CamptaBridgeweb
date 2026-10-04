@@ -172,6 +172,14 @@
     return data.document;
   }
 
+  async function deleteDocument(documentId) {
+    const response = await fetch(`${API}/portal/documents/${encodeURIComponent(documentId)}`, {
+      method: "DELETE", headers: { Authorization: `Bearer ${token}` },
+    });
+    const data = await response.json().catch(() => ({}));
+    if (!response.ok) throw new Error(apiError(data, "Impossible de supprimer le document."));
+  }
+
   function renderDocuments(documents) {
     const body = document.querySelector("#portal-documents-body");
     if (!body) return;
@@ -196,7 +204,8 @@
       const clientFacturxAction = document.facturx_available ? `<button class="table-action" type="button" data-facturx-download-id="${escapeHtml(document.document_id)}" data-facturx-name="${escapeHtml(document.facturx_name)}">Télécharger Factur-X</button>` : "";
       const accountantOriginalAction = page === "accountant" && ["ready", "downloaded", "completed"].includes(status) ? downloadAction : "";
       const accountantWaiting = page === "accountant" && !accountantOriginalAction && !clientFacturxAction ? `<span class="muted">En attente de traitement</span>` : "";
-      const action = page === "administrator" ? `${statusAction}${facturxAction}${downloadAction}` : `${clientFacturxAction}${accountantOriginalAction}${accountantWaiting}`;
+      const deleteAction = page === "administrator" ? `<button class="table-action danger" type="button" data-delete-id="${escapeHtml(document.document_id)}">Supprimer</button>` : "";
+      const action = page === "administrator" ? `${statusAction}${facturxAction}${downloadAction}${deleteAction}` : `${clientFacturxAction}${accountantOriginalAction}${accountantWaiting}`;
       if (page === "accountant") {
         return `<tr><td><strong>${escapeHtml(customer)}</strong><small>${escapeHtml(document.customer_email || "")}</small></td><td>${escapeHtml(document.name)}</td><td>${escapeHtml(date)}</td><td>${escapeHtml(document.reference || "—")}</td><td><span class="status-badge ${statusClasses[status] || ""}">${escapeHtml(label)}</span>${workflowMarkup(status)}</td><td>${action}</td></tr>`;
       }
@@ -237,6 +246,12 @@
         await loadDocuments();
       } catch (error) { alert(error.message); button.disabled = false; }
     }));
+    body.querySelectorAll("[data-delete-id]").forEach((button) => button.addEventListener("click", async () => {
+      if (!window.confirm("Supprimer définitivement ce document et ses fichiers associés ?")) return;
+      button.disabled = true;
+      try { await deleteDocument(button.dataset.deleteId); await loadDocuments(); }
+      catch (error) { alert(error.message); button.disabled = false; }
+    }));
   }
 
   function updateMetrics(documents) {
@@ -260,14 +275,23 @@
       return;
     }
     const values = {
-      received: counts.received || 0,
+      received: (counts.received || 0) + (counts.correction || 0) + (counts.failed || 0),
       processing: counts.processing || 0,
       ready: counts.ready || 0,
       completed: (counts.completed || 0) + (counts.downloaded || 0),
     };
     Object.entries(values).forEach(([status, value]) => {
       const element = document.querySelector(`#metric-${status}`);
-      if (element) element.textContent = String(value);
+      if (!element) return;
+      element.textContent = String(value);
+      const card = element.closest("article");
+      if (!card) return;
+      card.classList.remove("metric-warning", "metric-danger", "metric-ready", "metric-success");
+      if (status === "completed" && value > 0) card.classList.add("metric-success");
+      else if (status === "ready" && value > 0) card.classList.add("metric-ready");
+      else if (status === "received" && (counts.failed || 0) > 0) card.classList.add("metric-danger");
+      else if (["received", "processing"].includes(status) && value >= 5) card.classList.add("metric-danger");
+      else if (["received", "processing"].includes(status) && value > 0) card.classList.add("metric-warning");
     });
   }
 

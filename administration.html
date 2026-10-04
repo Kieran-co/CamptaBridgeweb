@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="robots" content="noindex,nofollow">
   <title>Administration — ComptaBridge</title>
-  <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="styles.css?v=20261004-2">
 </head>
 <body class="role-portal administrator-portal">
   <div class="portal-layout">
@@ -24,14 +24,29 @@
     </aside>
 
     <main class="portal-main" id="dashboard">
-      <header class="portal-topbar"><div><span class="eyebrow">Pilotage du service</span><h1>Bonjour Kieran</h1><p>Retrouve les documents de tous tes clients et suis leur traitement.</p></div><button class="button button-small" type="button">Ajouter un client</button></header>
+      <header class="portal-topbar"><div><span class="eyebrow">Pilotage du service</span><h1>Bonjour Kieran</h1><p>Retrouve les documents de tous tes clients et suis leur traitement.</p></div><a class="button button-small" href="#documents">Voir les fichiers <span>↓</span></a></header>
 
       <section class="portal-metrics" aria-label="Indicateurs">
-        <article><span>À traiter</span><strong id="metric-received">—</strong><small>Documents reçus</small></article>
+        <article><span>À traiter</span><strong id="metric-received">—</strong><small>En attente de traitement</small></article>
         <article><span>En cours</span><strong id="metric-processing">—</strong><small>Traitement commencé</small></article>
         <article><span>Disponibles</span><strong id="metric-ready">—</strong><small>En attente du client</small></article>
         <article><span>Terminées</span><strong id="metric-completed">—</strong><small>Traitement terminé</small></article>
       </section>
+
+      <section class="portal-panel" id="documents">
+        <div class="portal-panel-head"><div><span class="eyebrow">File de traitement</span><h2>Documents récents</h2></div><div class="portal-filters"><button class="active" data-document-filter="all" type="button">Tous</button><button data-document-filter="received" type="button">Reçus</button><button data-document-filter="processing" type="button">En cours</button><button data-document-filter="ready" type="button">Disponibles</button></div></div>
+        <div class="portal-table-wrap" role="region" aria-label="Liste des fichiers déposés" tabindex="0"><table class="portal-table"><thead><tr><th>Client</th><th>Document</th><th>Réception</th><th>Statut</th><th>Partenaire</th><th></th></tr></thead><tbody id="portal-documents-body">
+          <tr data-status="received"><td><strong>Atelier Horizon</strong><small>contact@atelier-horizon.fr</small></td><td>facture-septembre.pdf</td><td>Aujourd’hui, 09:42</td><td><span class="status-badge status-badge-received">Reçu</span></td><td>Non attribué</td><td><button class="table-action" type="button">Ouvrir</button></td></tr>
+          <tr data-status="processing"><td><strong>Conseil Nova</strong><small>gestion@nova.fr</small></td><td>prestations-octobre.jpg</td><td>Hier, 16:18</td><td><span class="status-badge status-badge-processing">En cours</span></td><td>Toi</td><td><button class="table-action" type="button">Continuer</button></td></tr>
+          <tr data-status="ready"><td><strong>Maison Rivage</strong><small>direction@rivage.fr</small></td><td>Factur-X_FR-2026-104.pdf</td><td>30 sept. 2026</td><td><span class="status-badge status-badge-ready">Disponible</span></td><td>Cabinet Démo</td><td><button class="table-action" type="button">Consulter</button></td></tr>
+        </tbody></table></div>
+      </section>
+
+      <div class="portal-columns">
+        <section class="portal-panel" id="clients"><div class="portal-panel-head"><div><span class="eyebrow">Clients</span><h2>Entreprises suivies</h2></div><button class="text-button" type="button">Tout afficher</button></div><div class="portal-list" id="portal-clients-list"><div class="portal-empty-mini"><span>Chargement des clients…</span></div></div></section>
+        <section class="portal-panel" id="comptables"><div class="portal-panel-head"><div><span class="eyebrow">Accès partenaires</span><h2>Demandes de partenaires</h2></div></div><div class="portal-list" id="accountant-requests-list"><div class="portal-empty-mini"><span>Chargement des demandes…</span></div></div></section>
+      </div>
+      <p class="portal-preview-note">Connecté à l’API — les rôles et autorisations sont contrôlés côté serveur.</p>
 
       <section class="portal-panel profile-settings-panel" id="profile">
         <div class="portal-panel-head"><div><span class="eyebrow">Profil</span><h2>Vos informations</h2><p class="portal-panel-intro">Mettez à jour votre identité professionnelle et votre mot de passe.</p></div></div>
@@ -44,23 +59,8 @@
           <button class="button" type="submit">Enregistrer les modifications <span>→</span></button>
         </form>
       </section>
-
-      <section class="portal-panel" id="documents">
-        <div class="portal-panel-head"><div><span class="eyebrow">File de traitement</span><h2>Documents récents</h2></div><div class="portal-filters"><button class="active" data-document-filter="all" type="button">Tous</button><button data-document-filter="received" type="button">Reçus</button><button data-document-filter="processing" type="button">En cours</button><button data-document-filter="ready" type="button">Disponibles</button></div></div>
-        <div class="portal-table-wrap"><table class="portal-table"><thead><tr><th>Client</th><th>Document</th><th>Réception</th><th>Statut</th><th>Partenaire</th><th></th></tr></thead><tbody id="portal-documents-body">
-          <tr data-status="received"><td><strong>Atelier Horizon</strong><small>contact@atelier-horizon.fr</small></td><td>facture-septembre.pdf</td><td>Aujourd’hui, 09:42</td><td><span class="status-badge status-badge-received">Reçu</span></td><td>Non attribué</td><td><button class="table-action" type="button">Ouvrir</button></td></tr>
-          <tr data-status="processing"><td><strong>Conseil Nova</strong><small>gestion@nova.fr</small></td><td>prestations-octobre.jpg</td><td>Hier, 16:18</td><td><span class="status-badge status-badge-processing">En cours</span></td><td>Toi</td><td><button class="table-action" type="button">Continuer</button></td></tr>
-          <tr data-status="ready"><td><strong>Maison Rivage</strong><small>direction@rivage.fr</small></td><td>Factur-X_FR-2026-104.pdf</td><td>30 sept. 2026</td><td><span class="status-badge status-badge-ready">Disponible</span></td><td>Cabinet Démo</td><td><button class="table-action" type="button">Consulter</button></td></tr>
-        </tbody></table></div>
-      </section>
-
-      <div class="portal-columns">
-        <section class="portal-panel" id="clients"><div class="portal-panel-head"><div><span class="eyebrow">Clients</span><h2>Entreprises suivies</h2></div><button class="text-button" type="button">Tout afficher</button></div><div class="portal-list" id="portal-clients-list"><div class="portal-empty-mini"><span>Chargement des clients…</span></div></div></section>
-        <section class="portal-panel" id="comptables"><div class="portal-panel-head"><div><span class="eyebrow">Accès partenaires</span><h2>Demandes de partenaires</h2></div></div><div class="portal-list" id="accountant-requests-list"><div class="portal-empty-mini"><span>Chargement des demandes…</span></div></div></section>
-      </div>
-      <p class="portal-preview-note">Prévisualisation locale — les rôles et autorisations seront contrôlés côté API avant la mise en ligne.</p>
     </main>
   </div>
-  <script src="portail-roles.js?v=20261004-8"></script>
+  <script src="portail-roles.js?v=20261004-9"></script>
 </body>
 </html>
