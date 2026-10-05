@@ -80,6 +80,13 @@
 
   const statusLabels = { received: "Reçu", processing: "En cours", ready: "Disponible", downloaded: "Téléchargé", completed: "Terminé", correction: "À corriger", failed: "Échec" };
   const statusClasses = { received: "status-badge-received", processing: "status-badge-processing", ready: "status-badge-ready", downloaded: "status-badge-downloaded", completed: "status-badge-completed", correction: "status-badge-correction", failed: "status-badge-failed" };
+  const accountRoleLabels = { client: "Client", client_pending: "Client en attente", accountant: "Partenaire", accountant_pending: "Partenaire en attente", administrator: "Administrateur" };
+  const accountRoleClasses = { client: "status-badge-ready", client_pending: "status-badge-received", accountant: "status-badge-completed", accountant_pending: "status-badge-processing", administrator: "status-badge-downloaded" };
+  const readableDate = (value) => {
+    if (!value) return "—";
+    const date = new Date(value);
+    return Number.isNaN(date.getTime()) ? String(value) : date.toLocaleString("fr-FR", { dateStyle: "medium", timeStyle: "short" });
+  };
   const workflowMarkup = (status) => {
     const index = { received: 0, processing: 1, ready: 2, downloaded: 2, completed: 3 }[status];
     const steps = ["Reçu", "En cours", "Disponible", "Terminé"];
@@ -427,6 +434,42 @@
     }
   }
 
+  function renderAccounts(accounts) {
+    if (page !== "administrator") return;
+    const body = document.querySelector("#portal-accounts-body");
+    const summary = document.querySelector("#accounts-summary");
+    if (!body) return;
+    const pending = accounts.filter((item) => String(item.role || "").endsWith("_pending")).length;
+    if (summary) summary.textContent = `${accounts.length} compte${accounts.length > 1 ? "s" : ""}${pending ? ` · ${pending} en attente` : ""}`;
+    if (!accounts.length) {
+      body.innerHTML = `<tr><td colspan="5"><span class="muted">Aucun compte inscrit pour le moment.</span></td></tr>`;
+      return;
+    }
+    body.innerHTML = accounts.map((account) => {
+      const name = [account.first_name, account.last_name].filter(Boolean).join(" ") || "—";
+      const role = account.role || "—";
+      const label = accountRoleLabels[role] || role;
+      const badgeClass = accountRoleClasses[role] || "status-badge-muted";
+      return `<tr><td><strong>${escapeHtml(account.company_name || "Société non renseignée")}</strong></td><td>${escapeHtml(name)}</td><td>${escapeHtml(account.email || "—")}</td><td><span class="status-badge ${badgeClass}">${escapeHtml(label)}</span></td><td>${escapeHtml(readableDate(account.created_at))}</td></tr>`;
+    }).join("");
+  }
+
+  async function loadAccounts() {
+    if (page !== "administrator" || !token) return;
+    const body = document.querySelector("#portal-accounts-body");
+    const summary = document.querySelector("#accounts-summary");
+    if (!body) return;
+    try {
+      const response = await fetch(`${API}/portal/accounts`, { headers: { Authorization: `Bearer ${token}` } });
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(apiError(data, "Impossible de charger les comptes inscrits."));
+      renderAccounts(Array.isArray(data.accounts) ? data.accounts : []);
+    } catch (error) {
+      body.innerHTML = `<tr><td colspan="5"><span class="muted">${escapeHtml(error.message)}</span></td></tr>`;
+      if (summary) summary.textContent = "Indisponible";
+    }
+  }
+
   async function loadProfile() {
     if (!token) return goToLogin();
     try {
@@ -443,6 +486,7 @@
       loadDocuments();
       loadPortalClients();
       loadAccountantRequests();
+      loadAccounts();
     } catch (error) {
       setConnectionState(false, "Connexion indisponible");
       const note = document.querySelector(".portal-preview-note");
@@ -586,6 +630,9 @@
   window.setInterval(() => {
     if (document.visibilityState === "hidden" || !token) return;
     loadDocuments();
-    if (page === "administrator") loadAccountantRequests();
+    if (page === "administrator") {
+      loadAccountantRequests();
+      loadAccounts();
+    }
   }, 15000);
 })();
