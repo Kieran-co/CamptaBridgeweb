@@ -78,17 +78,117 @@
     sessionStorage.setItem(roleKey, profile.role || expectedRole);
   }
 
-  const statusLabels = { received: "Reçu", processing: "En cours", ready: "Disponible", downloaded: "Téléchargé", completed: "Terminé", correction: "À corriger", failed: "Échec" };
-  const statusClasses = { received: "status-badge-received", processing: "status-badge-processing", ready: "status-badge-ready", downloaded: "status-badge-downloaded", completed: "status-badge-completed", correction: "status-badge-correction", failed: "status-badge-failed" };
+  const statusLabels = { scanning: "Vérification", facturx_scanning: "Vérification du Factur-X", received: "Reçu", processing: "En cours", ready: "Disponible", downloaded: "Téléchargé", completed: "Terminé", correction: "À corriger", failed: "Échec" };
+  const statusClasses = { scanning: "status-badge-processing", facturx_scanning: "status-badge-processing", received: "status-badge-received", processing: "status-badge-processing", ready: "status-badge-ready", downloaded: "status-badge-downloaded", completed: "status-badge-completed", correction: "status-badge-correction", failed: "status-badge-failed" };
+  const MAX_UPLOAD_FILES = 20;
+  const uploadContentTypes = new Set([
+    "application/pdf", "image/jpeg", "image/png", "application/msword", "application/vnd.ms-excel",
+    "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+    "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+  ]);
+  const uploadExtensions = new Set([".pdf", ".jpg", ".jpeg", ".png", ".doc", ".docx", ".xls", ".xlsx"]);
   const accountRoleLabels = { client: "Client", client_pending: "Client en attente", accountant: "Partenaire", accountant_pending: "Partenaire en attente", administrator: "Administrateur" };
   const accountRoleClasses = { client: "status-badge-ready", client_pending: "status-badge-received", accountant: "status-badge-completed", accountant_pending: "status-badge-processing", administrator: "status-badge-downloaded" };
+  let accountantClients = [];
   const readableDate = (value) => {
     if (!value) return "—";
     const date = new Date(value);
     return Number.isNaN(date.getTime()) ? String(value) : date.toLocaleString("fr-FR", { dateStyle: "medium", timeStyle: "short" });
   };
+  const billingLabel = (billing = {}) => {
+    const status = billing.status || "trial";
+    if (status === "free") return "Accès gratuit";
+    if (status === "trial") return "1ʳᵉ facture gratuite";
+    if (status === "trial_processing") return "Essai en cours";
+    if (status === "payment_required") return "Abonnement requis";
+    if (status === "active") {
+      const used = Number(billing.used || 0);
+      const included = Number(billing.included || 25);
+      const remaining = Math.max(0, Number(billing.remaining ?? included - used));
+      return `${used}/${included} factures · ${remaining} restante${remaining > 1 ? "s" : ""}`;
+    }
+    if (status === "past_due") return "Paiement à régulariser";
+    if (status === "cancelled") return "Abonnement arrêté";
+    return status;
+  };
+  const billingSummary = (billing = {}) => {
+    const status = billing.status || "trial";
+    if (status === "free") return "Accès gratuit · dépôt possible sans abonnement";
+    if (status === "trial") return "1ʳᵉ facture gratuite disponible";
+    if (status === "trial_processing") return "Première facture en vérification · abonnement ensuite";
+    if (status === "payment_required") return "Abonnement requis pour déposer une nouvelle facture";
+    if (status === "active") {
+      const used = Number(billing.used || 0);
+      const included = Number(billing.included || 25);
+      const remaining = Math.max(0, Number(billing.remaining ?? included - used));
+      const overage = Number(billing.overage_units || 0);
+      return `Quota du mois : ${remaining}/${included} factures incluses restantes${overage ? ` · ${overage} dépassement${overage > 1 ? "s" : ""}` : ""}`;
+    }
+    if (status === "past_due") return "Paiement à régulariser avant un nouveau dépôt";
+    if (status === "cancelled") return "Abonnement arrêté · réactivation nécessaire";
+    return billingLabel(billing);
+  };
+  async function startBillingCheckout(scopeCustomerId, button) {
+    if (!scopeCustomerId || !token) return;
+    const originalLabel = button.textContent;
+    button.disabled = true;
+    button.textContent = "Préparation du paiement…";
+    try {
+      const response = await fetch(`${API}/billing/checkout`, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+        body: JSON.stringify({ scope_customer_id: scopeCustomerId }),
+      });
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(apiError(data, "Impossible de préparer le paiement."));
+      if (!data.checkout_url) throw new Error("Stripe n'a pas fourni de lien de paiement.");
+      window.location.assign(data.checkout_url);
+    } catch (error) {
+      button.disabled = false;
+      button.textContent = originalLabel;
+      alert(error.message);
+    }
+  }
+  function updateAccountantBillingHint() {
+    if (page !== "accountant") return;
+    const select = document.querySelector("#accountant-client");
+    if (!select) return;
+    let hint = document.querySelector("#accountant-client-billing");
+    if (!hint) {
+      hint = document.createElement("small");
+      hint.id = "accountant-client-billing";
+      hint.className = "accountant-billing-hint";
+      hint.setAttribute("role", "status");
+      select.insertAdjacentElement("afterend", hint);
+    }
+    const client = accountantClients.find((item) => item.customer_id === select.value);
+    hint.replaceChildren();
+    const summary = document.createElement("span");
+    summary.textContent = client
+      ? billingSummary(client.billing_status)
+      : "Choisis un client pour voir son quota.";
+    hint.append(summary);
+    const billingStatus = client?.billing_status?.status || "";
+    if (["payment_required", "past_due", "cancelled"].includes(billingStatus)) {
+      const button = document.createElement("button");
+      button.type = "button";
+      button.className = "table-action accountant-billing-button";
+      button.textContent = billingStatus === "past_due"
+        ? "Régulariser l’abonnement"
+        : billingStatus === "cancelled"
+          ? "Réactiver l’abonnement"
+          : "Payer l’abonnement pour ce client";
+      button.addEventListener("click", () => startBillingCheckout(client.customer_id, button));
+      hint.append(button);
+    }
+    hint.classList.toggle("accountant-billing-hint-warning", Boolean(client && client.billing_status && !client.billing_status.allowed));
+  }
+  const isAcceptedUploadFile = (file) => {
+    const extension = file.name.includes(".") ? `.${file.name.split(".").pop().toLowerCase()}` : "";
+    return uploadContentTypes.has(file.type) || uploadExtensions.has(extension);
+  };
   const workflowMarkup = (status) => {
-    const index = { received: 0, processing: 1, ready: 2, downloaded: 2, completed: 3 }[status];
+    const index = { scanning: 0, facturx_scanning: 2, received: 0, processing: 1, ready: 2, downloaded: 2, completed: 3 }[status];
     const steps = ["Reçu", "En cours", "Disponible", "Terminé"];
     return `<div class="portal-mini-workflow" aria-label="Parcours : ${escapeHtml(statusLabels[status] || status)}">${steps.map((label, step) => `<span class="${index === undefined ? "" : step < index ? "done" : step === index ? "active" : ""}">${step + 1}. ${label}</span>`).join("")}</div>`;
   };
@@ -165,10 +265,8 @@
 
   // Les statuts normaux sont déclenchés par les actions réelles :
   // téléchargement de l'original, dépôt du Factur-X puis téléchargement client.
-  // Seule une relance après échec reste une action manuelle.
-  const nextStatus = {
-    failed: ["processing", "Relancer le traitement"],
-  };
+  // Un fichier rejeté par l'antivirus doit être redéposé, jamais relancé tel quel.
+  const nextStatus = {};
 
   async function updateDocumentStatus(documentId, status) {
     const response = await fetch(`${API}/portal/documents/${encodeURIComponent(documentId)}/status?status=${encodeURIComponent(status)}`, {
@@ -201,13 +299,19 @@
     renderAccountantDownloads(documents);
     body.innerHTML = documents.map((document) => {
       const status = document.status || "received";
-      const label = statusLabels[status] || status;
+      const position = Number(document.scan_position || 0);
+      const queueLabel = position
+        ? position === 1 ? " · Vérification en cours" : ` · Position ${position} dans la file`
+        : "";
+      const label = `${statusLabels[status] || status}${queueLabel}`;
       const date = new Date(document.created_at).toLocaleString("fr-FR", { dateStyle: "medium", timeStyle: "short" });
       const customer = document.customer_name || document.customer_email || "Client";
-      const downloadAction = `<button class="table-action" type="button" data-download-id="${escapeHtml(document.document_id)}" data-download-name="${escapeHtml(document.name)}">Télécharger</button>`;
+      const downloadAction = ["scanning", "processing", "failed"].includes(status)
+        ? `<span class="muted">${status === "scanning" ? "Vérification antivirus…" : status === "processing" ? "Traitement en cours…" : "Fichier rejeté"}</span>`
+        : `<button class="table-action" type="button" data-download-id="${escapeHtml(document.document_id)}" data-download-name="${escapeHtml(document.name)}">Télécharger</button>`;
       const transition = page === "administrator" ? nextStatus[status] : null;
       const statusAction = transition ? `<button class="table-action" type="button" data-status-id="${escapeHtml(document.document_id)}" data-next-status="${transition[0]}">${transition[1]}</button>` : "";
-      const facturxAction = page === "administrator" ? (document.facturx_available ? `<button class="table-action" type="button" data-facturx-download-id="${escapeHtml(document.document_id)}" data-facturx-name="${escapeHtml(document.facturx_name)}">Télécharger Factur-X</button>` : `<input class="portal-hidden-file" id="facturx-${escapeHtml(document.document_id)}" data-facturx-input="${escapeHtml(document.document_id)}" type="file" accept="application/pdf"><label class="table-action" for="facturx-${escapeHtml(document.document_id)}">Déposer le Factur-X</label>`) : "";
+      const facturxAction = page === "administrator" && !["scanning", "facturx_scanning", "processing", "failed"].includes(status) ? (document.facturx_available ? `<button class="table-action" type="button" data-facturx-download-id="${escapeHtml(document.document_id)}" data-facturx-name="${escapeHtml(document.facturx_name)}">Télécharger Factur-X</button>` : `<input class="portal-hidden-file" id="facturx-${escapeHtml(document.document_id)}" data-facturx-input="${escapeHtml(document.document_id)}" type="file" accept="application/pdf"><label class="table-action" for="facturx-${escapeHtml(document.document_id)}">Déposer le Factur-X</label>`) : "";
       const clientFacturxAction = document.facturx_available ? `<button class="table-action" type="button" data-facturx-download-id="${escapeHtml(document.document_id)}" data-facturx-name="${escapeHtml(document.facturx_name)}">Télécharger Factur-X</button>` : "";
       const accountantOriginalAction = page === "accountant" && ["ready", "downloaded", "completed"].includes(status) ? downloadAction : "";
       const accountantWaiting = page === "accountant" && !accountantOriginalAction && !clientFacturxAction ? `<span class="muted">En attente de traitement</span>` : "";
@@ -267,7 +371,7 @@
       return result;
     }, {});
     if (page === "accountant") {
-      const received = ["received", "processing", "correction", "failed"].reduce((total, status) => total + (counts[status] || 0), 0);
+      const received = ["scanning", "facturx_scanning", "received", "processing", "correction", "failed"].reduce((total, status) => total + (counts[status] || 0), 0);
       const ready = (counts.ready || 0) + (counts.downloaded || 0);
       const completed = counts.completed || 0;
       const accountantValues = {
@@ -283,7 +387,7 @@
     }
     const values = {
       received: (counts.received || 0) + (counts.correction || 0) + (counts.failed || 0),
-      processing: counts.processing || 0,
+      processing: (counts.scanning || 0) + (counts.facturx_scanning || 0) + (counts.processing || 0),
       ready: counts.ready || 0,
       completed: (counts.completed || 0) + (counts.downloaded || 0),
     };
@@ -297,8 +401,8 @@
       if (status === "completed" && value > 0) card.classList.add("metric-success");
       else if (status === "ready" && value > 0) card.classList.add("metric-ready");
       else if (status === "received" && (counts.failed || 0) > 0) card.classList.add("metric-danger");
-      else if (["received", "processing"].includes(status) && value >= 5) card.classList.add("metric-danger");
-      else if (["received", "processing"].includes(status) && value > 0) card.classList.add("metric-warning");
+      else if (["received", "processing", "scanning"].includes(status) && value >= 5) card.classList.add("metric-danger");
+      else if (["received", "processing", "scanning"].includes(status) && value > 0) card.classList.add("metric-warning");
     });
   }
 
@@ -311,7 +415,7 @@
       const key = document.customer_id || document.customer_email || "unknown";
       const current = groups.get(key) || { name: document.customer_name || "Client", email: document.customer_email || "", total: 0, pending: 0 };
       current.total += 1;
-      if (["received", "processing", "correction"].includes(document.status)) current.pending += 1;
+      if (["scanning", "facturx_scanning", "received", "processing", "correction"].includes(document.status)) current.pending += 1;
       groups.set(key, current);
     });
     if (!groups.size) {
@@ -338,12 +442,13 @@
       const contact = [client.first_name, client.last_name].filter(Boolean).join(" ");
       const initials = company.split(/\s+/).map((part) => part[0]).join("").slice(0, 2).toUpperCase();
       const contactLine = contact || client.email || "Compte client à créer";
+      const billingLine = billingLabel(client.billing_status);
       const stateLabel = client.pending_account ? (client.email ? "En attente d’inscription" : "À inviter") : "Autorisé";
       const stateClass = client.pending_account ? "status-badge-received" : "status-badge-completed";
       const action = client.pending_account && !client.email
         ? `<button class="table-action" type="button" data-associate-client="${escapeHtml(client.customer_id)}">Associer un e-mail</button>`
         : "";
-      return `<div><span class="portal-avatar">${escapeHtml(initials || "CL")}</span><p><strong>${escapeHtml(company)}</strong><small>${escapeHtml(contactLine)}</small></p>${action}<span class="status-badge ${stateClass}">${stateLabel}</span></div>`;
+      return `<div><span class="portal-avatar">${escapeHtml(initials || "CL")}</span><p><strong>${escapeHtml(company)}</strong><small>${escapeHtml(contactLine)}<br>${escapeHtml(billingLine)}</small></p>${action}<span class="status-badge ${stateClass}">${stateLabel}</span></div>`;
     }).join("");
     list.querySelectorAll("[data-associate-client]").forEach((button) => button.addEventListener("click", async () => {
       const email = window.prompt("Adresse e-mail du client à rattacher :", "");
@@ -398,15 +503,24 @@
       const data = await response.json().catch(() => ({}));
       if (!response.ok) throw new Error(apiError(data, "Impossible de charger les clients."));
       const clients = Array.isArray(data.clients) ? data.clients : [];
+      const previousSelection = select?.value || "";
+      accountantClients = clients;
       if (select) select.innerHTML = clients.length
         ? `<option value="">Choisir un client…</option>${clients.map((client) => {
           const name = client.company_name || [client.first_name, client.last_name].filter(Boolean).join(" ") || "Entreprise à compléter";
-          return `<option value="${escapeHtml(client.customer_id)}">${escapeHtml(name)} — ${escapeHtml(client.email)}</option>`;
+          const contact = client.email || "Compte client à créer";
+          return `<option value="${escapeHtml(client.customer_id)}">${escapeHtml(name)} — ${escapeHtml(contact)} · ${escapeHtml(billingLabel(client.billing_status))}</option>`;
         }).join("")}`
         : `<option value="">Aucun client disponible</option>`;
+      if (previousSelection && clients.some((client) => client.customer_id === previousSelection)) {
+        select.value = previousSelection;
+      }
+      updateAccountantBillingHint();
       renderAccountantClients(clients);
     } catch (error) {
+      accountantClients = [];
       if (select) select.innerHTML = `<option value="">${escapeHtml(error.message)}</option>`;
+      updateAccountantBillingHint();
       renderAccountantClients([]);
     }
   }
@@ -442,7 +556,7 @@
     const pending = accounts.filter((item) => String(item.role || "").endsWith("_pending")).length;
     if (summary) summary.textContent = `${accounts.length} compte${accounts.length > 1 ? "s" : ""}${pending ? ` · ${pending} en attente` : ""}`;
     if (!accounts.length) {
-      body.innerHTML = `<tr><td colspan="5"><span class="muted">Aucun compte inscrit pour le moment.</span></td></tr>`;
+      body.innerHTML = `<tr><td colspan="7"><span class="muted">Aucun compte inscrit pour le moment.</span></td></tr>`;
       return;
     }
     body.innerHTML = accounts.map((account) => {
@@ -450,8 +564,30 @@
       const role = account.role || "—";
       const label = accountRoleLabels[role] || role;
       const badgeClass = accountRoleClasses[role] || "status-badge-muted";
-      return `<tr><td><strong>${escapeHtml(account.company_name || "Société non renseignée")}</strong></td><td>${escapeHtml(name)}</td><td>${escapeHtml(account.email || "—")}</td><td><span class="status-badge ${badgeClass}">${escapeHtml(label)}</span></td><td>${escapeHtml(readableDate(account.created_at))}</td></tr>`;
+      const billing = account.billing_status || {};
+      const billingStatus = billing.status || "trial";
+      const billingLabels = { trial: "Essai", trial_processing: "Essai en cours", active: "Abonné", free: "Gratuit", payment_required: "À activer", past_due: "Impayé", cancelled: "Arrêté" };
+      const billingClass = billingStatus === "free" ? "status-badge-completed" : billingStatus === "active" ? "status-badge-ready" : billingStatus === "payment_required" || billingStatus === "past_due" ? "status-badge-correction" : "status-badge-muted";
+      const canManageBilling = ["client", "client_pending"].includes(role);
+      const billingAction = canManageBilling ? `<button class="table-action" type="button" data-free-account="${escapeHtml(account.customer_id)}" data-free-state="${billingStatus === "free" ? "false" : "true"}">${billingStatus === "free" ? "Retirer gratuit" : "Rendre gratuit"}</button>` : "";
+      return `<tr><td><strong>${escapeHtml(account.company_name || "Société non renseignée")}</strong></td><td>${escapeHtml(name)}</td><td>${escapeHtml(account.email || "—")}</td><td><span class="status-badge ${badgeClass}">${escapeHtml(label)}</span></td><td><span class="status-badge ${billingClass}">${escapeHtml(billingLabels[billingStatus] || billingStatus)}</span></td><td>${escapeHtml(readableDate(account.created_at))}</td><td><div class="portal-table-actions">${billingAction}</div></td></tr>`;
     }).join("");
+    body.querySelectorAll("[data-free-account]").forEach((button) => button.addEventListener("click", async () => {
+      button.disabled = true;
+      try {
+        const response = await fetch(`${API}/admin/billing/accounts/${encodeURIComponent(button.dataset.freeAccount)}`, {
+          method: "PATCH",
+          headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+          body: JSON.stringify({ free_access: button.dataset.freeState === "true" }),
+        });
+        const data = await response.json().catch(() => ({}));
+        if (!response.ok) throw new Error(apiError(data, "Impossible de modifier l’offre du compte."));
+        await loadAccounts();
+      } catch (error) {
+        alert(error.message);
+        button.disabled = false;
+      }
+    }));
   }
 
   async function loadAccounts() {
@@ -465,8 +601,109 @@
       if (!response.ok) throw new Error(apiError(data, "Impossible de charger les comptes inscrits."));
       renderAccounts(Array.isArray(data.accounts) ? data.accounts : []);
     } catch (error) {
-      body.innerHTML = `<tr><td colspan="5"><span class="muted">${escapeHtml(error.message)}</span></td></tr>`;
+      body.innerHTML = `<tr><td colspan="7"><span class="muted">${escapeHtml(error.message)}</span></td></tr>`;
       if (summary) summary.textContent = "Indisponible";
+    }
+  }
+
+  const adminDocumentLabels = {
+    scanning: "Vérification antivirus",
+    facturx_scanning: "Vérification du Factur-X",
+    received: "Document reçu",
+    processing: "Traitement démarré",
+    ready: "Factur-X disponible",
+    downloaded: "Document téléchargé",
+    completed: "Traitement terminé",
+    correction: "Correction demandée",
+    failed: "Vérification échouée",
+    event_processed: "Événement Stripe traité",
+  };
+  function renderAdminOverview(overview) {
+    if (page !== "administrator") return;
+    const accounts = overview.accounts || {};
+    const documents = overview.documents || {};
+    const billing = overview.billing || {};
+    const catalog = overview.catalog || {};
+    const setText = (selector, value) => {
+      const element = document.querySelector(selector);
+      if (element) element.textContent = String(value ?? "—");
+    };
+    setText("#admin-metric-accounts", accounts.total ?? 0);
+    setText("#admin-metric-accounts-detail", `${accounts.clients ?? 0} clients · ${accounts.accountants ?? 0} partenaires`);
+    setText("#admin-metric-active", billing.active ?? 0);
+    setText("#admin-metric-active-detail", `${billing.total_scopes ?? 0} périmètres de facturation`);
+    setText("#admin-metric-queue", documents.queue ?? 0);
+    setText("#admin-metric-queue-detail", `${documents.total ?? 0} documents enregistrés`);
+    setText("#admin-metric-attention", billing.attention ?? 0);
+    setText("#admin-metric-attention-detail", `${billing.past_due ?? 0} impayé${billing.past_due === 1 ? "" : "s"} · ${billing.cancelled ?? 0} abonnement${billing.cancelled === 1 ? "" : "s"} arrêté${billing.cancelled === 1 ? "" : "s"}`);
+    setText("#admin-overview-updated", overview.generated_at ? `Mis à jour ${readableDate(overview.generated_at)}` : "Synchronisé");
+
+    const apiDot = document.querySelector("#admin-api-dot");
+    if (apiDot) apiDot.classList.toggle("warning", false);
+    const health = document.querySelector("#admin-health-list");
+    if (health) {
+      health.innerHTML = `<div><span>API ComptaBridge</span><strong class="admin-health-ok">Connectée</strong></div><div><span>Événements Stripe traités</span><strong>${escapeHtml(billing.stripe_events ?? 0)}</strong></div><div><span>Catalogue de facturation</span><strong>${escapeHtml(catalog.profiles ?? 0)} profils · ${escapeHtml(catalog.products ?? 0)} produits</strong></div>`;
+    }
+    const breakdown = document.querySelector("#admin-billing-breakdown");
+    if (breakdown) {
+      const rows = [
+        ["Abonnements actifs", billing.active ?? 0, "status-badge-ready", "Actif"],
+        ["Essais / à activer", (billing.trial ?? 0) + (billing.inactive ?? 0), "status-badge-received", "Essai"],
+        ["Accès gratuits", billing.free ?? 0, "status-badge-completed", "Gratuit"],
+        ["À surveiller", billing.attention ?? 0, "status-badge-correction", "Attention"],
+      ];
+      breakdown.innerHTML = rows.map(([label, value, klass, badgeLabel]) => `<div><span>${escapeHtml(label)}</span><strong>${escapeHtml(value)}</strong><span class="status-badge ${klass}">${escapeHtml(badgeLabel)}</span></div>`).join("");
+    }
+    const attentionDetails = document.querySelector("#admin-attention-details");
+    if (attentionDetails) {
+      const hasAttentionDetails = Array.isArray(billing.attention_accounts);
+      const attentionAccounts = hasAttentionDetails ? billing.attention_accounts : [];
+      if (!hasAttentionDetails) {
+        attentionDetails.innerHTML = `<div class="admin-attention-empty"><strong>Détail indisponible</strong><span>Déploie la dernière version de l’API pour afficher les comptes concernés.</span></div>`;
+      } else if (!attentionAccounts.length) {
+        attentionDetails.innerHTML = `<div class="admin-attention-empty"><strong>Aucun compte à surveiller</strong><span>Les impayés et abonnements arrêtés apparaîtront ici.</span></div>`;
+      } else {
+        const rows = attentionAccounts.map((item) => {
+          const label = item.scope_label || item.owner_label || "Compte";
+          const email = item.scope_email || item.owner_email || "";
+          const managedByPartner = item.scope_customer_id && item.owner_customer_id && item.scope_customer_id !== item.owner_customer_id;
+          const payer = managedByPartner && item.owner_label ? `Payeur : ${item.owner_label}` : "";
+          const statusLabel = item.status === "past_due" ? "Impayé" : "Abonnement arrêté";
+          const statusClass = item.status === "past_due" ? "status-badge-correction" : "status-badge-muted";
+          return `<div class="admin-attention-row"><div><strong>${escapeHtml(label)}</strong>${email ? `<small>${escapeHtml(email)}</small>` : ""}${payer ? `<small>${escapeHtml(payer)}</small>` : ""}</div><span class="status-badge ${statusClass}">${statusLabel}</span><small>Mis à jour ${escapeHtml(readableDate(item.updated_at))}</small></div>`;
+        }).join("");
+        attentionDetails.innerHTML = `<div class="admin-attention-heading"><strong>Comptes concernés</strong><span>${attentionAccounts.length} à vérifier</span></div><div class="admin-attention-list">${rows}</div><a class="text-button admin-attention-link" href="#accounts">Voir le détail des comptes <span>↓</span></a>`;
+      }
+    }
+    const body = document.querySelector("#admin-activity-body");
+    if (!body) return;
+    const activity = Array.isArray(overview.activity) ? overview.activity : [];
+    if (!activity.length) {
+      body.innerHTML = `<tr><td colspan="5"><span class="muted">Aucune activité enregistrée pour le moment.</span></td></tr>`;
+      return;
+    }
+    body.innerHTML = activity.map((item) => {
+      const source = item.source === "stripe" ? "Stripe" : "Documents";
+      const accountLabel = item.account_label || (item.source === "stripe" ? "Compte de paiement" : "—");
+      const event = adminDocumentLabels[item.event_type] || item.event_type || "Activité";
+      return `<tr><td><span class="status-badge ${item.source === "stripe" ? "status-badge-downloaded" : "status-badge-ready"}">${escapeHtml(source)}</span></td><td><strong>${escapeHtml(event)}</strong><small>${escapeHtml(item.label || "")}</small></td><td>${escapeHtml(accountLabel)}</td><td><code>${escapeHtml(item.reference || "—")}</code></td><td>${escapeHtml(readableDate(item.created_at))}</td></tr>`;
+    }).join("");
+  }
+
+  async function loadAdminOverview() {
+    if (page !== "administrator" || !token) return;
+    try {
+      const response = await fetch(`${API}/admin/overview`, { headers: { Authorization: `Bearer ${token}` } });
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(apiError(data, "Impossible de charger les indicateurs administrateur."));
+      renderAdminOverview(data);
+    } catch (error) {
+      const updated = document.querySelector("#admin-overview-updated");
+      if (updated) updated.textContent = "Indisponible";
+      const apiDot = document.querySelector("#admin-api-dot");
+      if (apiDot) apiDot.classList.add("warning");
+      const body = document.querySelector("#admin-activity-body");
+      if (body) body.innerHTML = `<tr><td colspan="5"><span class="muted">${escapeHtml(error.message)}</span></td></tr>`;
     }
   }
 
@@ -487,6 +724,7 @@
       loadPortalClients();
       loadAccountantRequests();
       loadAccounts();
+      loadAdminOverview();
     } catch (error) {
       setConnectionState(false, "Connexion indisponible");
       const note = document.querySelector(".portal-preview-note");
@@ -564,36 +802,56 @@
     loadPortalClients();
   }));
   const accountantUploadForm = document.querySelector("#accountant-upload-form");
+  const accountantClientSelect = document.querySelector("#accountant-client");
+  if (accountantClientSelect) accountantClientSelect.addEventListener("change", updateAccountantBillingHint);
   if (accountantUploadForm) accountantUploadForm.addEventListener("submit", async (event) => {
     event.preventDefault();
     const status = document.querySelector("#accountant-upload-status");
-    const file = document.querySelector("#accountant-file")?.files?.[0];
+    const files = Array.from(document.querySelector("#accountant-file")?.files || []);
     const customerId = document.querySelector("#accountant-client")?.value || "";
     if (!customerId) { status.textContent = "Sélectionne le client concerné."; status.classList.add("error"); return; }
-    if (!file) { status.textContent = "Sélectionne un fichier à déposer."; status.classList.add("error"); return; }
-    if (!["application/pdf", "image/jpeg", "image/png"].includes(file.type) || file.size > 10 * 1024 * 1024) {
-      status.textContent = "Format accepté : PDF, JPG ou PNG de 10 Mo maximum.";
+    const selectedClient = accountantClients.find((item) => item.customer_id === customerId);
+    if (selectedClient?.billing_status && selectedClient.billing_status.allowed === false) {
+      status.textContent = billingSummary(selectedClient.billing_status);
+      status.classList.add("error");
+      return;
+    }
+    if (!files.length) { status.textContent = "Sélectionne au moins un fichier à déposer."; status.classList.add("error"); return; }
+    if (files.length > MAX_UPLOAD_FILES) { status.textContent = `Sélectionne au maximum ${MAX_UPLOAD_FILES} fichiers à la fois.`; status.classList.add("error"); return; }
+    const invalidFile = files.find((file) => file.size > 10 * 1024 * 1024 || !isAcceptedUploadFile(file));
+    if (invalidFile) {
+      status.textContent = `« ${invalidFile.name} » n'est pas accepté. Utilise PDF, JPG, PNG, Word ou Excel (10 Mo maximum par fichier).`;
       status.classList.add("error");
       return;
     }
     status.classList.remove("error");
-    status.textContent = "Dépôt en cours…";
     const submit = accountantUploadForm.querySelector("button[type=submit]");
     if (submit) submit.disabled = true;
+    let deposited = 0;
     try {
-      await uploadPortalDocument(
-        file,
-        customerId,
-        document.querySelector("#accountant-reference").value.trim(),
-        document.querySelector("#accountant-comment").value.trim(),
-      );
-      status.textContent = "Document déposé. Il est maintenant visible dans l’administration avec le statut « Reçu ».";
-      accountantUploadForm.reset();
-      await loadDocuments();
+      const reference = document.querySelector("#accountant-reference").value.trim();
+      const comment = document.querySelector("#accountant-comment").value.trim();
+      for (const [index, file] of files.entries()) {
+        status.textContent = `Dépôt ${index + 1}/${files.length} : ${file.name}`;
+        await uploadPortalDocument(file, customerId, reference, comment);
+        deposited += 1;
+      }
+      status.textContent = `${deposited} ${deposited > 1 ? "documents déposés" : "document déposé"}. Vérification antivirus en cours pour chaque fichier.`;
+      document.querySelector("#accountant-file").value = "";
+      document.querySelector("#accountant-reference").value = "";
+      document.querySelector("#accountant-comment").value = "";
+      updateAccountantBillingHint();
     } catch (error) {
-      status.textContent = error.message;
+      if (deposited) {
+        accountantUploadForm.querySelector("#accountant-file").value = "";
+      }
+      status.textContent = deposited
+        ? `${deposited}/${files.length} fichiers ont été déposés. Les suivants n'ont pas été envoyés : ${error.message}`
+        : error.message;
       status.classList.add("error");
     } finally {
+      await loadDocuments();
+      await loadPortalClients();
       if (submit) submit.disabled = false;
     }
   });
@@ -633,6 +891,7 @@
     if (page === "administrator") {
       loadAccountantRequests();
       loadAccounts();
+      loadAdminOverview();
     }
   }, 15000);
 })();

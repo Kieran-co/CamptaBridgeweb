@@ -11,7 +11,7 @@
 <body class="account-page">
   <header class="nav account-nav">
     <a class="brand" href="index.html" aria-label="Accueil ComptaBridge"><img src="assets/comptabridge-logo.png" alt="ComptaBridge"></a>
-    <nav aria-label="Navigation principale"><a href="index.html">Retour au site</a><a class="button button-small" href="index.html#offres">Découvrir les offres</a></nav>
+    <nav aria-label="Navigation principale"><a href="index.html">Retour au site</a><a class="button button-small" href="index.html#tarifs">Découvrir les offres</a></nav>
   </header>
 
   <main class="account-shell">
@@ -69,7 +69,7 @@
             <p id="register-status" class="form-status" role="status"></p>
             <button class="button auth-primary" type="submit">Créer mon espace <span>→</span></button>
           </form>
-          <p class="account-note">En créant votre compte, vous acceptez les conditions d’utilisation de ComptaBridge.</p>
+          <label class="terms-consent" for="register-terms"><input id="register-terms" type="checkbox" required><span>J’accepte les <a href="legal/cgv.html" target="_blank" rel="noopener">conditions générales de vente et d’utilisation</a> et reconnais avoir lu la <a href="legal/confidentialite.html" target="_blank" rel="noopener">politique de confidentialité</a>.</span></label>
         </section>
 
         <section id="reset-view" class="auth-view" hidden>
@@ -98,6 +98,19 @@
         <div><span>Service</span><strong class="online-state"><i></i> Opérationnel</strong></div>
       </div>
 
+      <article class="dashboard-card billing-card wide" id="billing-card">
+        <div class="card-heading"><div><span class="eyebrow">Votre offre</span><h2 id="billing-title">Première facture offerte</h2></div><span class="status-badge status-badge-muted" id="billing-status-badge">Chargement</span></div>
+        <p id="billing-message">Nous préparons le suivi de votre consommation.</p>
+        <div class="billing-metrics">
+          <div><span>Factures utilisées</span><strong id="billing-usage">—</strong></div>
+          <div><span>Factures restantes</span><strong id="billing-remaining">—</strong></div>
+          <div><span>Supplément estimé</span><strong id="billing-overage">—</strong></div>
+          <div><span>Prochaine réinitialisation</span><strong id="billing-reset">—</strong></div>
+        </div>
+        <p class="billing-note" id="billing-note">Les prix sont affichés hors taxes. Une facture gratuite est disponible avant l’activation de l’abonnement.</p>
+        <div class="billing-actions"><button class="button button-small" id="billing-action" type="button" hidden>Activer mon abonnement <span>→</span></button></div>
+      </article>
+
       <div class="dashboard-grid">
         <article class="dashboard-card invoice-card wide">
           <div class="card-heading">
@@ -108,10 +121,10 @@
           <form id="invoice-upload-form" class="invoice-upload-form">
             <label class="upload-dropzone" for="invoice-file">
               <span class="upload-icon" aria-hidden="true">↑</span>
-              <strong id="invoice-file-label">Déposer un fichier</strong>
+              <strong id="invoice-file-label">Déposer des fichiers</strong>
               <span id="invoice-file-name" class="upload-file-name">Aucun fichier sélectionné</span>
-              <span>PDF, JPG, PNG · 10 Mo maximum</span>
-              <input id="invoice-file" type="file" accept="application/pdf,image/jpeg,image/png">
+              <span>PDF, JPG, PNG, Word ou Excel · 10 Mo par fichier · 20 fichiers maximum par dépôt</span>
+              <input id="invoice-file" type="file" accept="application/pdf,image/jpeg,image/png,.doc,.docx,.xls,.xlsx" multiple>
             </label>
             <div class="invoice-fields">
               <label>Référence (optionnel)<input id="invoice-reference" maxlength="80" placeholder="Ex. Facture fournisseur - septembre"></label>
@@ -120,7 +133,7 @@
             <p id="invoice-upload-status" class="form-status" role="status"></p>
             <button class="button button-small" type="submit">Ajouter à la file de traitement <span>→</span></button>
           </form>
-          <p class="portal-note"><span aria-hidden="true">i</span> Vos documents sont conservés sur le stockage sécurisé ComptaBridge. Leur traitement et leur statut sont gérés par l’équipe ComptaBridge.</p>
+          <p class="portal-note"><span aria-hidden="true">i</span> Vos documents sont conservés sur le stockage sécurisé ComptaBridge. Les fichiers Word et Excel sont déposés comme documents source ; leur Factur-X devra être généré à partir d’un PDF.</p>
         </article>
 
         <article class="dashboard-card invoice-card wide">
@@ -149,12 +162,18 @@
           </form>
         </article>
 
+        <article class="dashboard-card wide" id="synced-journal-card">
+          <span class="eyebrow">Logiciel Windows</span><h2>Mon journal synchronisé</h2>
+          <p>Factures créées dans le logiciel, règlements déclarés et avoirs. Cette vue est en lecture seule, distincte des documents confiés au service de conversion. Les PDF ne sont pas transférés par cette synchronisation.</p>
+          <button class="button button-small" type="button" id="refresh-synced-journal">Afficher / actualiser le journal</button>
+          <p class="form-status" id="synced-journal-status" role="status"></p><div id="synced-journal-list"></div>
+        </article>
         <article class="dashboard-card support-card wide"><div><span class="eyebrow">Besoin d’aide ?</span><h2>Nous sommes là pour vous accompagner.</h2><p>Une question sur votre compte ou le traitement d’une facture ?</p></div><a class="button button-ghost" href="mailto:support@comptabridge.fr">Contacter le support</a></article>
       </div>
     </section>
   </main>
 
   <footer><img src="assets/comptabridge-logo.png" alt="ComptaBridge"><p>ComptaBridge — préparation et suivi des factures électroniques.</p><p><a href="legal/mentions-legales.html">Mentions légales</a> · <a href="legal/confidentialite.html">Confidentialité</a> · <a href="legal/cgv.html">CGV</a></p></footer>
-  <script src="compte.js?v=20261004-5"></script>
+  <script src="compte.js?v=20261013-journal-sync"></script>
 </body>
 </html>

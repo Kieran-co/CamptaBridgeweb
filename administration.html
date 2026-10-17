@@ -5,7 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="robots" content="noindex,nofollow">
   <title>Administration — ComptaBridge</title>
-  <link rel="stylesheet" href="styles.css?v=20261005-1">
+  <link rel="stylesheet" href="styles.css?v=20261010-1">
+  <link rel="stylesheet" href="launch.css?v=20261015-2">
 </head>
 <body class="role-portal administrator-portal">
   <div class="portal-layout">
@@ -14,11 +15,13 @@
       <div class="portal-role"><span>KA</span><div><strong>Kieran</strong><small>Administrateur</small></div></div>
       <nav class="portal-menu" aria-label="Administration">
         <a class="active" href="#dashboard">Vue d’ensemble</a>
+        <a href="#admin-overview">Pilotage</a>
         <a href="#documents">Documents</a>
         <a href="#clients">Clients</a>
         <a href="#accounts">Comptes inscrits</a>
         <a href="#comptables">Partenaires</a>
         <a href="#history">Historique</a>
+        <a href="#launch-alert-admin">Alerte de lancement</a>
         <a href="#profile">Mon profil</a>
       </nav>
       <div class="portal-sidebar-foot"><span class="online-state"><i></i> Vérification…</span><a href="compte.html">Voir l’espace client</a><button class="portal-logout" data-logout type="button">Se déconnecter</button></div>
@@ -32,6 +35,30 @@
         <article><span>En cours</span><strong id="metric-processing">—</strong><small>Traitement commencé</small></article>
         <article><span>Disponibles</span><strong id="metric-ready">—</strong><small>En attente du client</small></article>
         <article><span>Terminées</span><strong id="metric-completed">—</strong><small>Traitement terminé</small></article>
+      </section>
+
+      <section class="portal-panel admin-overview-panel" id="admin-overview">
+        <div class="portal-panel-head">
+          <div><span class="eyebrow">Console interne</span><h2>Pilotage de ComptaBridge</h2><p class="portal-panel-intro">Une vue synthétique des comptes, des abonnements, des documents et de l’activité technique. Les secrets d’authentification et les données de carte restent toujours masqués.</p></div>
+          <span class="accounts-summary" id="admin-overview-updated">Synchronisation…</span>
+        </div>
+        <div class="admin-overview-metrics" aria-label="Indicateurs de la plateforme">
+          <article><span>Comptes inscrits</span><strong id="admin-metric-accounts">—</strong><small id="admin-metric-accounts-detail">Clients et partenaires</small></article>
+          <article><span>Abonnements actifs</span><strong id="admin-metric-active">—</strong><small id="admin-metric-active-detail">Périmètres facturés</small></article>
+          <article><span>Dans la file</span><strong id="admin-metric-queue">—</strong><small id="admin-metric-queue-detail">Vérifications en cours</small></article>
+          <article><span>Facturation à surveiller</span><strong id="admin-metric-attention">—</strong><small id="admin-metric-attention-detail">Impayés ou abonnements arrêtés</small></article>
+        </div>
+        <div class="admin-overview-grid">
+          <article class="admin-overview-card">
+            <div class="admin-card-heading"><div><span class="eyebrow">État du service</span><h3>Sources de données</h3></div><span class="status-dot" id="admin-api-dot"></span></div>
+            <div class="admin-health-list" id="admin-health-list"><div><span>API ComptaBridge</span><strong>Synchronisation…</strong></div><div><span>Événements Stripe traités</span><strong>—</strong></div><div><span>Catalogue de facturation</span><strong>—</strong></div></div>
+          </article>
+          <article class="admin-overview-card">
+            <div class="admin-card-heading"><div><span class="eyebrow">Facturation</span><h3>Répartition des accès</h3></div><a href="#accounts" class="text-button">Voir les comptes</a></div>
+            <div class="admin-billing-breakdown" id="admin-billing-breakdown"><span>Chargement des abonnements…</span></div>
+            <div class="admin-attention-details" id="admin-attention-details" aria-live="polite"><span class="muted">Chargement des comptes concernés…</span></div>
+          </article>
+        </div>
       </section>
 
       <section class="portal-panel" id="documents">
@@ -55,9 +82,27 @@
         </div>
         <div class="portal-table-wrap accounts-table-wrap" role="region" aria-label="Liste des comptes inscrits" tabindex="0">
           <table class="portal-table accounts-table">
-            <thead><tr><th>Société</th><th>Nom</th><th>E-mail</th><th>Rôle</th><th>Inscription</th></tr></thead>
-            <tbody id="portal-accounts-body"><tr><td colspan="5"><span class="muted">Chargement des comptes…</span></td></tr></tbody>
+            <thead><tr><th>Société</th><th>Nom</th><th>E-mail</th><th>Rôle</th><th>Offre</th><th>Inscription</th><th></th></tr></thead>
+            <tbody id="portal-accounts-body"><tr><td colspan="7"><span class="muted">Chargement des comptes…</span></td></tr></tbody>
           </table>
+        </div>
+      </section>
+
+      <section class="portal-panel" id="launch-alert-admin">
+        <div class="portal-panel-head"><div><span class="eyebrow">Facturation · Lancement</span><h2>Prévenir les personnes inscrites</h2><p class="portal-panel-intro">Seules les adresses confirmées reçoivent cette annonce unique. Le compte à rebours n’envoie aucun message automatiquement.</p></div></div>
+        <p id="launch-admin-counts" class="launch-form-status">Chargement des inscriptions…</p>
+        <button class="button button-ghost" id="launch-admin-refresh" type="button">Actualiser les compteurs</button>
+        <form id="launch-admin-send" class="launch-admin-form">
+          <label><input type="checkbox" required name="ready"> Je confirme que le logiciel et les modalités d’accès sont réellement disponibles et que l’offre du site est à jour.</label>
+          <button class="button" type="submit" disabled>Envoyer l’annonce aux 5 prochaines adresses</button>
+        </form>
+        <p id="launch-admin-status" class="launch-form-status" role="status"></p>
+        <p class="portal-panel-intro">Chaque clic traite au maximum 5 adresses. Les envois déjà acceptés par le serveur SMTP ne sont pas répétés. Un résultat incertain demande une vérification manuelle et n’est jamais réexpédié automatiquement. L’acceptation SMTP ne garantit pas la réception en boîte de destination.</p>
+      </section>
+      <section class="portal-panel" id="history">
+        <div class="portal-panel-head"><div><span class="eyebrow">Traçabilité</span><h2>Activité récente</h2><p class="portal-panel-intro">Les changements de statut des documents et les événements Stripe reçus par l’API.</p></div><span class="accounts-summary">30 derniers événements</span></div>
+        <div class="portal-table-wrap admin-activity-wrap" role="region" aria-label="Historique de la plateforme" tabindex="0">
+          <table class="portal-table admin-activity-table"><thead><tr><th>Source</th><th>Événement</th><th>Compte ou document</th><th>Référence</th><th>Date</th></tr></thead><tbody id="admin-activity-body"><tr><td colspan="5"><span class="muted">Chargement de l’activité…</span></td></tr></tbody></table>
         </div>
       </section>
       <p class="portal-preview-note">Connecté à l’API — les rôles et autorisations sont contrôlés côté serveur.</p>
@@ -75,6 +120,7 @@
       </section>
     </main>
   </div>
-  <script src="portail-roles.js?v=20261005-1"></script>
+  <script src="portail-roles.js?v=20261010-1"></script>
+  <script src="launch-admin.js?v=20261015-2"></script>
 </body>
 </html>

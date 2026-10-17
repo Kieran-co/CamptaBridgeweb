@@ -1,5 +1,12 @@
 # Site local ComptaBridge
 
+## Reprise sur un autre ordinateur
+
+Lire [REPRISE_CODEX.md](REPRISE_CODEX.md) sur la branche
+`audit/reprise-20261017` pour le contexte actuel du site, le lien vers le dépôt
+logiciel/API et les contrôles restant à effectuer. Le reste de ce README conserve
+des informations historiques de préparation.
+
 Vitrine commerciale locale, prête pour la pré-commercialisation. Elle ne
 contient aucun paiement : les offres commerciales restent informatives jusqu'à
 la création de la société et la validation des documents juridiques.
