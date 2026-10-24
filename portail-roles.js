@@ -130,6 +130,10 @@
   };
   async function startBillingCheckout(scopeCustomerId, button) {
     if (!scopeCustomerId || !token) return;
+    const checkoutToken = sessionStorage.getItem('comptabridge_account_token');
+    if (!window.ComptaBridgeSalesRegion) return;
+    const billingCountry = await window.ComptaBridgeSalesRegion.choose();
+    if (!billingCountry || checkoutToken !== sessionStorage.getItem('comptabridge_account_token')) return;
     const originalLabel = button.textContent;
     button.disabled = true;
     button.textContent = "Préparation du paiement…";
@@ -137,7 +141,7 @@
       const response = await fetch(`${API}/billing/checkout`, {
         method: "POST",
         headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
-        body: JSON.stringify({ scope_customer_id: scopeCustomerId }),
+        body: JSON.stringify({ scope_customer_id: scopeCustomerId, billing_country: billingCountry }),
       });
       const data = await response.json().catch(() => ({}));
       if (!response.ok) throw new Error(apiError(data, "Impossible de préparer le paiement."));

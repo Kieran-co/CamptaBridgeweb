@@ -36,7 +36,9 @@ async function open(t, options = {}) {
     requests.push({ endpoint, method: req.method(), body: req.postDataJSON(), authorization: req.headers().authorization });
     let data = { documents: [], clients: [], accounts: [], requests: [], events: [] }, status = 200;
     if (endpoint === 'auth/profile') data = { email: 'fixture@example.com', first_name: 'Recette', last_name: 'Fictive', company_name: 'Démo', role: options.role || 'client' };
-    if (endpoint === 'auth/billing/status') data = { status: 'active', used: 0, included: 25, remaining: 25 };
+    if (endpoint === 'auth/billing/status') data = options.webBilling || { status: 'active', used: 0, included: 25, remaining: 25 };
+    if (endpoint === 'portal/clients') data = { clients: options.clients || [] };
+    if (endpoint === 'billing/checkout') data = { checkout_url: 'https://checkout.stripe.com/c/pay/web-fixture' };
     if (endpoint === 'software/status') data = options.software || { sales_enabled: false, status: 'none' };
     if (endpoint === 'software/checkout') {
       data = options.purchase || { checkout_url: 'https://checkout.stripe.com/c/pay/software-fixture' };
@@ -159,11 +161,12 @@ test('logiciel : offre séparée, consentement et paiement limité au compte con
   await root.getByRole('button', { name: 'S’abonner — 9,99 € HT/mois' }).waitFor();
   await root.getByRole('button', { name: 'S’abonner — 9,99 € HT/mois' }).click();
   assert.equal(requests.filter(req => req.endpoint === 'software/checkout').length, 0);
-  await root.getByRole('checkbox').check();
+  await root.getByLabel('Pays ou territoire de facturation').selectOption('FR');
+  await root.getByRole('checkbox', { name: /conditions générales/ }).check();
   await root.getByRole('button', { name: 'S’abonner — 9,99 € HT/mois' }).click();
   await page.waitForURL('https://checkout.stripe.com/c/pay/software-fixture');
   const purchase = requests.find(req => req.endpoint === 'software/checkout');
-  assert.deepEqual(purchase.body, { accept_terms: true });
+  assert.deepEqual(purchase.body, { accept_terms: true, billing_country: 'FR' });
   assert.equal(purchase.authorization, 'Bearer fixture-token');
   assert.equal(requests.filter(req => req.endpoint === 'billing/checkout').length, 0);
 });
@@ -189,7 +192,8 @@ test('logiciel : licence active, restauration sur ses appareils et absence de se
 test('logiciel : erreur Stripe visible et reprise possible sans perdre le compte', async t => {
   const { page } = await open(t, { software: { status: 'pending', sales_enabled: true }, purchaseStatus: 503, purchase: { detail: 'Configuration TVA indisponible.' } });
   const root = page.locator('[data-software-subscription]');
-  await root.getByRole('checkbox').check();
+  await root.getByLabel('Pays ou territoire de facturation').selectOption('FR');
+  await root.getByRole('checkbox', { name: /conditions générales/ }).check();
   await root.getByRole('button', { name: 'Reprendre mon paiement' }).click();
   await root.getByText('Configuration TVA indisponible.').waitFor();
   assert.equal(await root.getByRole('button', { name: 'Reprendre mon paiement' }).isEnabled(), true);
@@ -198,8 +202,68 @@ test('logiciel : erreur Stripe visible et reprise possible sans perdre le compte
 test('logiciel : destination du paiement contrôlée', async t => {
   const { page } = await open(t, { software: { status: 'none', sales_enabled: true }, purchase: { checkout_url: 'https://checkout.stripe.com.evil.invalid/' } });
   const root = page.locator('[data-software-subscription]');
-  await root.getByRole('checkbox').check();
+  await root.getByLabel('Pays ou territoire de facturation').selectOption('FR');
+  await root.getByRole('checkbox', { name: /conditions générales/ }).check();
   await root.getByRole('button', { name: 'S’abonner — 9,99 € HT/mois' }).click();
   await root.getByText('Adresse du paiement Stripe invalide.').waitFor();
   assert.ok(page.url().startsWith(origin));
+});
+
+test('logiciel : adresse française et CGV exigées séparément avant le paiement', async t => {
+  const { page, requests } = await open(t, { software: { status: 'none', sales_enabled: true } });
+  const root = page.locator('[data-software-subscription]');
+  await root.getByText('Souscription réservée aux adresses de facturation en France, outre-mer compris.').waitFor();
+  const country = root.getByLabel('Pays ou territoire de facturation');
+  const terms = root.getByRole('checkbox', { name: /conditions générales/ });
+  const buy = root.getByRole('button', { name: 'S’abonner — 9,99 € HT/mois' });
+  await terms.check();
+  await buy.click();
+  assert.equal(requests.filter(req => req.endpoint === 'software/checkout').length, 0);
+  await terms.uncheck();
+  await country.selectOption('GP');
+  await buy.click();
+  assert.equal(requests.filter(req => req.endpoint === 'software/checkout').length, 0);
+});
+
+test('territoires : logiciel propose la métropole et tous les codes français d’outre-mer', async t => {
+  const { page, requests } = await open(t, { software: { status: 'none', sales_enabled: true } });
+  const root = page.locator('[data-software-subscription]');
+  const country = root.getByLabel('Pays ou territoire de facturation');
+  const codes = await country.locator('option').evaluateAll(options => options.map(option => option.value).filter(Boolean).sort());
+  assert.deepEqual(codes, ['FR', 'GP', 'MQ', 'GF', 'RE', 'YT', 'PM', 'BL', 'MF', 'PF', 'NC', 'WF', 'TF'].sort());
+  await country.selectOption('RE');
+  await root.getByRole('checkbox', { name: /conditions générales/ }).check();
+  await root.getByRole('button', { name: 'S’abonner — 9,99 € HT/mois' }).click();
+  await page.waitForURL('https://checkout.stripe.com/c/pay/software-fixture');
+  assert.equal(requests.find(req => req.endpoint === 'software/checkout').body.billing_country, 'RE');
+});
+test('territoires : offre web individuelle attend une sélection explicite avant Stripe', async t => {
+  const { page, requests } = await open(t, { webBilling: { status: 'payment_required' } });
+  await page.locator('#billing-action').click();
+  const dialog = page.getByRole('dialog');
+  await dialog.getByRole('button', { name: 'Continuer vers le paiement' }).click();
+  assert.equal(requests.filter(req => req.endpoint === 'billing/checkout').length, 0);
+  await dialog.getByLabel('Pays ou territoire de facturation').selectOption('GP');
+  await dialog.getByRole('button', { name: 'Continuer vers le paiement' }).click();
+  await page.waitForURL('https://checkout.stripe.com/c/pay/web-fixture');
+  assert.deepEqual(requests.find(req => req.endpoint === 'billing/checkout').body, { scope_customer_id: '', billing_country: 'GP' });
+});
+test('territoires : annuler la sélection web ne crée aucun paiement', async t => {
+  const { page, requests } = await open(t, { webBilling: { status: 'payment_required' } });
+  await page.locator('#billing-action').click();
+  await page.getByRole('dialog').getByRole('button', { name: 'Annuler', exact: true }).click();
+  assert.equal(await page.getByRole('dialog').count(), 0);
+  assert.equal(requests.filter(req => req.endpoint === 'billing/checkout').length, 0);
+});
+test('territoires : offre partenaire conserve le client sélectionné et le pays du payeur', async t => {
+  const { page, requests } = await open(t, { page: 'comptable.html', role: 'accountant', clients: [
+    { customer_id: 'client_fixture', company_name: 'Entreprise fictive', email: 'fixture@example.com', billing_status: { status: 'payment_required' } },
+  ] });
+  await page.locator('#accountant-client').selectOption('client_fixture');
+  await page.getByRole('button', { name: 'Payer l’abonnement pour ce client' }).click();
+  const dialog = page.getByRole('dialog');
+  await dialog.getByLabel('Pays ou territoire de facturation').selectOption('NC');
+  await dialog.getByRole('button', { name: 'Continuer vers le paiement' }).click();
+  await page.waitForURL('https://checkout.stripe.com/c/pay/web-fixture');
+  assert.deepEqual(requests.find(req => req.endpoint === 'billing/checkout').body, { scope_customer_id: 'client_fixture', billing_country: 'NC' });
 });

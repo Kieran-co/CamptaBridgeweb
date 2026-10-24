@@ -26,6 +26,7 @@
     if (!current) return;
     root.append(node('h2', 'Mon logiciel de facturation'));
     root.append(node('p', '9,99 € HT/mois · Facturation seule · Clients et documents illimités · Tous vos appareils. La TVA applicable est calculée au paiement.'));
+    root.append(node('p', 'Souscription réservée aux adresses de facturation en France, outre-mer compris.'));
     const status = node('p'); status.className = 'form-status'; status.setAttribute('role', 'status'); root.append(status);
     let data;
     try { data = await request('status', {}, current); }
@@ -45,6 +46,9 @@
       if (data.sales_enabled !== true) { root.append(node('p', 'La souscription au logiciel n’est pas encore ouverte.')); }
       else {
         const form = node('form'); form.className = 'software-purchase-form';
+        const countryField = window.ComptaBridgeSalesRegion?.field();
+        if (!countryField) { status.textContent = 'Le formulaire de facturation ne peut pas être chargé. Actualisez la page.'; return; }
+        form.append(countryField.label);
         const label = node('label'); label.className = 'software-terms';
         const consent = node('input'); consent.type = 'checkbox'; consent.required = true;
         label.append(consent, document.createTextNode(' J’accepte les '));
@@ -57,7 +61,7 @@
           if (pending || token() !== current || !form.reportValidity()) return;
           pending = true; buy.disabled = true; status.textContent = 'Préparation du paiement sécurisé…';
           try {
-            const result = await request('checkout', { method: 'POST', body: JSON.stringify({ accept_terms: true }) }, current);
+            const result = await request('checkout', { method: 'POST', body: JSON.stringify({ accept_terms: true, billing_country: countryField.select.value }) }, current);
             if (generation !== version) return;
             const url = new URL(result.checkout_url);
             if (url.protocol !== 'https:' || url.hostname !== 'checkout.stripe.com' || url.username || url.password || (url.port && url.port !== '443')) throw new Error('Adresse du paiement Stripe invalide.');
