@@ -14,3 +14,8 @@
 [data-account-management] .form-status { overflow-wrap: anywhere; }
 [data-account-management] button:disabled { opacity: .65; cursor: wait; }
 @media (max-width: 600px) { .account-subscription { align-items: stretch; flex-direction: column; } }
+.software-purchase-form { display: grid; gap: 1rem; margin-block: 1rem; }
+.software-terms { display: block; }
+.software-terms input { width: auto; margin-inline-end: .5rem; }
+.software-terms a { text-decoration: underline; }
+[data-software-subscription] { overflow-wrap: anywhere; }

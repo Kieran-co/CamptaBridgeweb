@@ -37,6 +37,11 @@ async function open(t, options = {}) {
     let data = { documents: [], clients: [], accounts: [], requests: [], events: [] }, status = 200;
     if (endpoint === 'auth/profile') data = { email: 'fixture@example.com', first_name: 'Recette', last_name: 'Fictive', company_name: 'Démo', role: options.role || 'client' };
     if (endpoint === 'auth/billing/status') data = { status: 'active', used: 0, included: 25, remaining: 25 };
+    if (endpoint === 'software/status') data = options.software || { sales_enabled: false, status: 'none' };
+    if (endpoint === 'software/checkout') {
+      data = options.purchase || { checkout_url: 'https://checkout.stripe.com/c/pay/software-fixture' };
+      status = options.purchaseStatus || 200;
+    }
     if (endpoint === 'auth/account-management') {
       if (options.waitManagement) await options.waitManagement;
       data = { subscriptions: options.subscriptions || [subscription], closure_state: options.closing ? 'closing' : '' };
@@ -147,4 +152,54 @@ test('la page anonyme ne demande aucune gestion de compte', async t => {
   const { root, requests } = await open(t, { anonymous: true });
   assert.equal(await root.isHidden(), true);
   assert.equal(requests.filter(req => req.endpoint === 'auth/account-management').length, 0);
+});
+test('logiciel : offre séparée, consentement et paiement limité au compte connecté', async t => {
+  const { page, requests } = await open(t, { software: { status: 'none', sales_enabled: true } });
+  const root = page.locator('[data-software-subscription]');
+  await root.getByRole('button', { name: 'S’abonner — 9,99 € HT/mois' }).waitFor();
+  await root.getByRole('button', { name: 'S’abonner — 9,99 € HT/mois' }).click();
+  assert.equal(requests.filter(req => req.endpoint === 'software/checkout').length, 0);
+  await root.getByRole('checkbox').check();
+  await root.getByRole('button', { name: 'S’abonner — 9,99 € HT/mois' }).click();
+  await page.waitForURL('https://checkout.stripe.com/c/pay/software-fixture');
+  const purchase = requests.find(req => req.endpoint === 'software/checkout');
+  assert.deepEqual(purchase.body, { accept_terms: true });
+  assert.equal(purchase.authorization, 'Bearer fixture-token');
+  assert.equal(requests.filter(req => req.endpoint === 'billing/checkout').length, 0);
+});
+test('logiciel : ventes fermées sans bouton de paiement', async t => {
+  const { page } = await open(t);
+  const root = page.locator('[data-software-subscription]');
+  await root.getByText('La souscription au logiciel n’est pas encore ouverte.').waitFor();
+  assert.equal(await root.getByRole('checkbox').count(), 0);
+});
+test('logiciel : un retour de paiement ne suffit pas à annoncer une licence active', async t => {
+  const { page } = await open(t, { page: 'compte.html?software=return', software: { status: 'pending', sales_enabled: true } });
+  const root = page.locator('[data-software-subscription]');
+  await root.getByText(/la licence sera disponible après confirmation de Stripe/).waitFor();
+  assert.equal(await root.getByText('Votre abonnement logiciel est actif.').count(), 0);
+});
+test('logiciel : licence active, restauration sur ses appareils et absence de second achat', async t => {
+  const { page } = await open(t, { software: { status: 'active', sales_enabled: true, paid_until: 1800000000 } });
+  const root = page.locator('[data-software-subscription]');
+  await root.getByText('Votre abonnement logiciel est actif.').waitFor();
+  await root.getByText(/connectez-vous avec ce même compte/).waitFor();
+  assert.equal(await root.getByRole('checkbox').count(), 0);
+});
+test('logiciel : erreur Stripe visible et reprise possible sans perdre le compte', async t => {
+  const { page } = await open(t, { software: { status: 'pending', sales_enabled: true }, purchaseStatus: 503, purchase: { detail: 'Configuration TVA indisponible.' } });
+  const root = page.locator('[data-software-subscription]');
+  await root.getByRole('checkbox').check();
+  await root.getByRole('button', { name: 'Reprendre mon paiement' }).click();
+  await root.getByText('Configuration TVA indisponible.').waitFor();
+  assert.equal(await root.getByRole('button', { name: 'Reprendre mon paiement' }).isEnabled(), true);
+  assert.equal(await page.evaluate(() => sessionStorage.getItem('comptabridge_account_token')), 'fixture-token');
+});
+test('logiciel : destination du paiement contrôlée', async t => {
+  const { page } = await open(t, { software: { status: 'none', sales_enabled: true }, purchase: { checkout_url: 'https://checkout.stripe.com.evil.invalid/' } });
+  const root = page.locator('[data-software-subscription]');
+  await root.getByRole('checkbox').check();
+  await root.getByRole('button', { name: 'S’abonner — 9,99 € HT/mois' }).click();
+  await root.getByText('Adresse du paiement Stripe invalide.').waitFor();
+  assert.ok(page.url().startsWith(origin));
 });
