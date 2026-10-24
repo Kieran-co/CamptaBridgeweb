@@ -1,0 +1,15 @@
+[data-account-management][hidden] { display: none; }
+[data-account-management] { margin-block: 1.5rem; }
+.account-subscriptions { display: grid; gap: 1rem; margin-block: 1rem; }
+.account-subscription { display: flex; align-items: center; flex-wrap: wrap; gap: .75rem; border-block-end: 1px solid #cbd5e1; padding-block: 1rem; }
+.account-subscription span { flex: 1; }
+.account-closure { margin-block-start: 2rem; border-block-start: 1px solid #cbd5e1; padding-block-start: 1rem; }
+.account-closure summary { cursor: pointer; font-weight: 700; color: #fca5a5; padding: .5rem 0; }
+.account-closure-form { display: grid; gap: 1rem; max-width: 34rem; }
+.account-closure-form label { display: grid; gap: .5rem; }
+.account-closure-form input { padding: .8rem; border: 1px solid #64748b; border-radius: .5rem; width: 100%; box-sizing: border-box; background: #fff; color: #0f172a; }
+.account-delete-button { background: #991b1b; border-color: #991b1b; color: #fff; }
+.account-delete-button:hover { background: #7f1d1d; }
+[data-account-management] .form-status { overflow-wrap: anywhere; }
+[data-account-management] button:disabled { opacity: .65; cursor: wait; }
+@media (max-width: 600px) { .account-subscription { align-items: stretch; flex-direction: column; } }
