@@ -81,6 +81,7 @@ function saveSession(data) {
     sessionStorage.setItem(key, value);
     localStorage.removeItem(key);
   });
+  window.dispatchEvent(new Event("comptabridge:session-changed"));
 }
 
 function redirectForRole(role) {
@@ -102,7 +103,11 @@ function clearSession() {
     sessionStorage.removeItem(key);
     localStorage.removeItem(key);
   });
-  if (account) localStorage.removeItem(invoiceStoragePrefix + account);
+  if (account) {
+    localStorage.removeItem(invoiceStoragePrefix + account);
+    sessionStorage.removeItem(invoiceStoragePrefix + account);
+  }
+  window.dispatchEvent(new Event("comptabridge:session-changed"));
 }
 
 function currentProfile() {
