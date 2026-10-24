@@ -20,7 +20,7 @@ before(async () => {
   browser = await chromium.launch({ headless: true, ...(process.env.CHROMIUM_EXECUTABLE_PATH ? { executablePath: process.env.CHROMIUM_EXECUTABLE_PATH } : {}) });
 });
 after(async () => { await browser?.close(); if (server) await new Promise(resolve => server.close(resolve)); });
-const subscription = { subscription_id: 'sub_fixture', product: 'web', status: 'active', cancellation_scheduled: false, period_end: 0 };
+const subscription = { subscription_id: 'sub_fixture', scope_name: 'EntrepriseDeDémonstrationAuNomVolontairementTrèsLongPourLaRecetteMobile', product: 'web', status: 'active', cancellation_scheduled: false, period_end: 0 };
 async function open(t, options = {}) {
   const context = await browser.newContext({ viewport: options.mobile ? { width: 390, height: 844 } : { width: 1280, height: 900 } });
   t.after(() => context.close());
