@@ -14,3 +14,13 @@
 [data-account-management] .form-status { overflow-wrap: anywhere; }
 [data-account-management] button:disabled { opacity: .65; cursor: wait; }
 @media (max-width: 600px) { .account-subscription { align-items: stretch; flex-direction: column; } }
+.software-purchase-form { display: grid; gap: 1rem; margin-block: 1rem; }
+.software-terms { display: block; }
+.software-terms input { width: auto; margin-inline-end: .5rem; }
+.software-terms a { text-decoration: underline; }
+[data-software-subscription] { overflow-wrap: anywhere; }
+.sales-region-dialog { width: min(32rem, calc(100% - 3rem)); max-height: 85vh; overflow: auto; border: 1px solid #64748b; border-radius: .75rem; padding: 1.5rem; background: #fff; color: #0f172a; }
+.sales-region-dialog::backdrop { background: #0f172acc; }
+.guarded-purchase { display: grid; gap: .75rem; margin-block: 1rem; padding-block: 1rem; border-block-end: 1px solid #64748b; overflow-wrap: anywhere; }
+[data-guarded-billing][hidden] { display: none; }
+.software-purchase-form select { display: block; width: 100%; box-sizing: border-box; margin-block-start: .5rem; padding: .8rem; background: #fff; color: #0f172a; border: 1px solid #64748b; border-radius: .5rem; }

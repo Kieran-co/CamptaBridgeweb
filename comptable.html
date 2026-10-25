@@ -6,7 +6,7 @@
   <meta name="robots" content="noindex,nofollow">
   <title>Espace partenaires — ComptaBridge</title>
   <link rel="stylesheet" href="styles.css?v=20261008-6">
-  <link rel="stylesheet" href="account-management.css?v=20261024-1">
+  <link rel="stylesheet" href="account-management.css?v=20261025-guarded">
 </head>
 <body class="role-portal accountant-portal">
   <div class="portal-layout">
@@ -25,10 +25,15 @@
       <div class="portal-columns" id="clients"><section class="portal-panel"><div class="portal-panel-head"><div><span class="eyebrow">Autorisations</span><h2>Ajouter un client</h2><p class="portal-panel-intro">Le nom de l’entreprise suffit. L’e-mail est facultatif si le client n’a pas encore d’espace ComptaBridge.</p></div></div><form id="accountant-client-form" class="accountant-client-form"><label>Nom de l’entreprise<input id="accountant-company-name" maxlength="160" required placeholder="Ex. SAS Martin &amp; Fils"></label><label>E-mail du client <span class="muted">(facultatif)</span><input id="accountant-client-email" type="email" maxlength="254" placeholder="client@entreprise.fr"><small class="form-help">Tu peux déposer ses factures même sans compte client.</small></label><p id="accountant-client-status" class="form-status" role="status"></p><button class="button" type="submit">Ajouter ce client <span>→</span></button></form></section><section class="portal-panel"><div class="portal-panel-head"><div><span class="eyebrow">Clients rattachés</span><h2>Mes clients</h2></div></div><div class="portal-list" id="portal-accountant-clients-list"><div class="portal-empty-mini"><strong>Chargement des clients…</strong></div></div></section></div>
       <section class="portal-panel" id="downloads"><div class="portal-panel-head"><div><span class="eyebrow">Historique</span><h2>Derniers téléchargements</h2></div></div><div class="portal-list compact" id="portal-accountant-downloads-list"><div class="portal-empty-mini"><strong>Aucun téléchargement</strong><span>Les Factur-X téléchargés apparaîtront ici.</span></div></div></section>
       <p class="portal-preview-note">Les données affichées viennent de l’API ComptaBridge. Aucun client ou document fictif n’est utilisé.</p>
+      <section class="portal-panel" data-guarded-billing hidden></section>
+      <section class="portal-panel" data-software-subscription hidden></section>
       <section class="portal-panel" data-account-management hidden></section>
     </main>
   </div>
-  <script src="portail-roles.js?v=20261008-3"></script>
+  <script src="sales-region.js?v=20261025-1"></script>
+  <script src="portail-roles.js?v=20261025-guarded"></script>
   <script src="account-management.js?v=20261024-1"></script>
+  <script src="software-subscription.js?v=20261025-guarded"></script>
+  <script src="guarded-billing.js?v=20261025-1"></script>
 </body>
 </html>
