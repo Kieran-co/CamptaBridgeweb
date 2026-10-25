@@ -49,6 +49,7 @@
         const countryField = window.ComptaBridgeSalesRegion?.field();
         if (!countryField) { status.textContent = 'Le formulaire de facturation ne peut pas être chargé. Actualisez la page.'; return; }
         form.append(countryField.label);
+        if (data.payment_flow === 'checked_invoices_v1') form.append(node('p', 'Votre carte sera enregistrée sans débit. Vérifiez ensuite votre facture et son total avant le premier paiement. Les renouvellements mensuels utiliseront la carte enregistrée après contrôle de la facturation.'));
         const label = node('label'); label.className = 'software-terms';
         const consent = node('input'); consent.type = 'checkbox'; consent.required = true;
         label.append(consent, document.createTextNode(' J’accepte les '));
@@ -63,9 +64,7 @@
           try {
             const result = await request('checkout', { method: 'POST', body: JSON.stringify({ accept_terms: true, billing_country: countryField.select.value }) }, current);
             if (generation !== version) return;
-            const url = new URL(result.checkout_url);
-            if (url.protocol !== 'https:' || url.hostname !== 'checkout.stripe.com' || url.username || url.password || (url.port && url.port !== '443')) throw new Error('Adresse du paiement Stripe invalide.');
-            window.location.assign(url.href);
+            window.location.assign(window.ComptaBridgeSalesRegion.paymentUrl(result.checkout_url));
           } catch (error) {
             if (generation === version && token() === current) { status.textContent = error.message; pending = false; buy.disabled = false; }
           }

@@ -141,12 +141,12 @@
       const response = await fetch(`${API}/billing/checkout`, {
         method: "POST",
         headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
-        body: JSON.stringify({ scope_customer_id: scopeCustomerId, billing_country: billingCountry }),
+        body: JSON.stringify({ scope_customer_id: scopeCustomerId, billing_country: billingCountry, accept_terms: true }),
       });
       const data = await response.json().catch(() => ({}));
       if (!response.ok) throw new Error(apiError(data, "Impossible de préparer le paiement."));
       if (!data.checkout_url) throw new Error("Stripe n'a pas fourni de lien de paiement.");
-      window.location.assign(data.checkout_url);
+      window.location.assign(window.ComptaBridgeSalesRegion.paymentUrl(data.checkout_url));
     } catch (error) {
       button.disabled = false;
       button.textContent = originalLabel;

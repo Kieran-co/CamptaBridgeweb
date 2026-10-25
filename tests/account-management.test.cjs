@@ -39,6 +39,10 @@ async function open(t, options = {}) {
     if (endpoint === 'auth/billing/status') data = options.webBilling || { status: 'active', used: 0, included: 25, remaining: 25 };
     if (endpoint === 'portal/clients') data = { clients: options.clients || [] };
     if (endpoint === 'billing/checkout') data = { checkout_url: 'https://checkout.stripe.com/c/pay/web-fixture' };
+    if (endpoint === 'billing/purchases') data = { purchases: options.purchases || [] };
+    if (/^billing\/purchases\/[^/]+\/prepare$/.test(endpoint)) { data = options.prepared || (options.purchases || [])[0] || {}; status = options.prepareStatus || 200; }
+    if (/^billing\/purchases\/[^/]+\/invoices$/.test(endpoint)) data = { invoices: [{ number: 'FACTURE-RECETTE', status: 'paid', amount_cents: 1199, url: checkedPurchase.checkout_url }] };
+    if (/^billing\/purchases\/[^/]+\/portal$/.test(endpoint)) data = { portal_url: 'https://billing.stripe.com/p/checked-fixture' };
     if (endpoint === 'software/status') data = options.software || { sales_enabled: false, status: 'none' };
     if (endpoint === 'software/checkout') {
       data = options.purchase || { checkout_url: 'https://checkout.stripe.com/c/pay/software-fixture' };
@@ -244,9 +248,10 @@ test('territoires : offre web individuelle attend une sélection explicite avant
   await dialog.getByRole('button', { name: 'Continuer vers le paiement' }).click();
   assert.equal(requests.filter(req => req.endpoint === 'billing/checkout').length, 0);
   await dialog.getByLabel('Pays ou territoire de facturation').selectOption('GP');
+  await dialog.getByRole('checkbox', { name: /conditions générales/ }).check();
   await dialog.getByRole('button', { name: 'Continuer vers le paiement' }).click();
   await page.waitForURL('https://checkout.stripe.com/c/pay/web-fixture');
-  assert.deepEqual(requests.find(req => req.endpoint === 'billing/checkout').body, { scope_customer_id: '', billing_country: 'GP' });
+  assert.deepEqual(requests.find(req => req.endpoint === 'billing/checkout').body, { scope_customer_id: '', billing_country: 'GP', accept_terms: true });
 });
 test('territoires : annuler la sélection web ne crée aucun paiement', async t => {
   const { page, requests } = await open(t, { webBilling: { status: 'payment_required' } });
@@ -263,7 +268,60 @@ test('territoires : offre partenaire conserve le client sélectionné et le pays
   await page.getByRole('button', { name: 'Payer l’abonnement pour ce client' }).click();
   const dialog = page.getByRole('dialog');
   await dialog.getByLabel('Pays ou territoire de facturation').selectOption('NC');
+  await dialog.getByRole('checkbox', { name: /conditions générales/ }).check();
   await dialog.getByRole('button', { name: 'Continuer vers le paiement' }).click();
   await page.waitForURL('https://checkout.stripe.com/c/pay/web-fixture');
-  assert.deepEqual(requests.find(req => req.endpoint === 'billing/checkout').body, { scope_customer_id: 'client_fixture', billing_country: 'NC' });
+  assert.deepEqual(requests.find(req => req.endpoint === 'billing/checkout').body, { scope_customer_id: 'client_fixture', billing_country: 'NC', accept_terms: true });
+});
+
+const checkedPurchase = { purchase_id: 'a'.repeat(48), product: 'software', stage: 'awaiting_payment', amount_due_cents: 1199, currency: 'eur', checkout_url: 'https://invoice.stripe.com/i/acct_fixture/checked', error: '' };
+test('paiement contrôlé : total affiché avant le lien de paiement, sans débit depuis le site', async t => {
+  const { page, requests } = await open(t, { purchases: [checkedPurchase] });
+  const root = page.locator('[data-guarded-billing]');
+  await root.getByText(/Total à régler : 11,99/).waitFor();
+  const pay = root.getByRole('link', { name: /Vérifier et payer la facture/ });
+  assert.equal(await pay.getAttribute('href'), checkedPurchase.checkout_url);
+  assert.equal(requests.filter(req => req.method === 'POST' && req.endpoint.includes('/purchases/')).length, 0);
+});
+test('paiement contrôlé : retour de carte déclenche la préparation, sans annoncer une licence active', async t => {
+  const { page, requests } = await open(t, { page: 'compte.html?setup_return=' + checkedPurchase.purchase_id,
+    purchases: [{ ...checkedPurchase, stage: 'setup', checkout_url: '' }], prepared: checkedPurchase });
+  const root = page.locator('[data-guarded-billing]');
+  await root.getByRole('link', { name: /Vérifier et payer/ }).waitFor();
+  assert.equal(requests.filter(req => req.endpoint.endsWith('/prepare')).length, 1);
+  assert.equal(await root.getByText('Abonnement actif.', { exact: true }).count(), 0);
+  assert.equal(new URL(page.url()).searchParams.has('setup_return'), false);
+});
+test('paiement contrôlé : adresse refusée affiche le refus et conserve la session', async t => {
+  const { page } = await open(t, { page: 'compte.html?setup_return=' + checkedPurchase.purchase_id,
+    purchases: [{ ...checkedPurchase, stage: 'setup', checkout_url: '' }], prepareStatus: 403,
+    prepared: { detail: 'Adresse hors du territoire de vente ; aucun paiement effectué.' } });
+  const root = page.locator('[data-guarded-billing]');
+  await root.getByText('Adresse hors du territoire de vente ; aucun paiement effectué.').waitFor();
+  assert.equal(await root.getByRole('link').count(), 0);
+  assert.equal(await page.evaluate(() => sessionStorage.getItem('comptabridge_account_token')), 'fixture-token');
+});
+test('paiement contrôlé : facture externe refusée', async t => {
+  const { page } = await open(t, { purchases: [{ ...checkedPurchase, checkout_url: 'https://invoice.stripe.com.evil.invalid/' }] });
+  const root = page.locator('[data-guarded-billing]');
+  await root.getByText('Adresse du paiement Stripe invalide.').waitFor();
+  assert.equal(await root.getByRole('link').count(), 0);
+});
+test('paiement contrôlé : coordonnées modifiables depuis le portail autorisé', async t => {
+  const { page } = await open(t, { purchases: [{ ...checkedPurchase, stage: 'blocked_country', checkout_url: '', error: 'Mettez à jour votre adresse.' }] });
+  await page.locator('[data-guarded-billing]').getByRole('button', { name: 'Mettre à jour mes coordonnées ou ma carte' }).click();
+  await page.waitForURL('https://billing.stripe.com/p/checked-fixture');
+});
+
+test('paiement contrôlé : historique des factures accessible depuis le compte', async t => {
+  const { page } = await open(t, { purchases: [{ ...checkedPurchase, stage: 'active', checkout_url: '' }] });
+  const root = page.locator('[data-guarded-billing]');
+  await root.getByRole('button', { name: 'Historique de facturation' }).click();
+  const link = root.getByRole('link', { name: /FACTURE-RECETTE.*Payée/ });
+  await link.waitFor();
+  assert.equal(await link.getAttribute('href'), checkedPurchase.checkout_url);
+});
+test('paiement contrôlé : logiciel annonce l’enregistrement sans débit pour le mode correspondant', async t => {
+  const { page } = await open(t, { software: { status: 'none', sales_enabled: true, payment_flow: 'checked_invoices_v1' } });
+  await page.locator('[data-software-subscription]').getByText(/Votre carte sera enregistrée sans débit/).waitFor();
 });

@@ -1,5 +1,20 @@
 # Offre Facturation à 9,99 EUR HT/mois
 
+**Nouveau parcours sans Radar Plus :** le drapeau serveur
+`COMPTABRIDGE_GUARDED_BILLING_ENABLED` sélectionne un Checkout de carte sans débit,
+suivi d'une vérification serveur et d'une facture dont le total est affiché avant
+paiement. `guarded-billing.js`, présent dans les trois espaces, prépare le retour
+`setup_return`, affiche les factures à payer et permet de gérer les coordonnées,
+la carte et l'historique. Les liens sont limités aux hôtes Stripe attendus ; une
+licence active n'est jamais déduite du retour navigateur. Les CGV et le territoire
+sont exigés pour les paiements web individuels et partenaires aussi.
+
+Le serveur garde les renouvellements en brouillon et les collecte après contrôle.
+Le guide API `docs/PAIEMENT_CONTROLE.md` décrit les réservations, le collecteur à
+déployer, les permissions Stripe, les reprises et la recette prestataire restante.
+Le mode payant historique et son drapeau de contrôle prestataire décrits ci-dessous
+restent une option distincte ; ils ne sont pas requis par ce nouveau parcours.
+
 Le composant `software-subscription.js`, présent dans les trois espaces connectés,
 affiche une offre distincte du service accompagné. Le paiement utilise le compte
 connecté ; aucun identifiant de tarif, compte ou licence ne vient du navigateur.
@@ -38,7 +53,7 @@ celui du portail sont des paramètres serveur ; les clés restent dans leur
 mécanisme de secrets. La création d'un tarif dans Stripe n'ouvre pas les ventes.
 La date du compteur existant n'active aucun paiement automatiquement.
 
-Publier ensemble les trois pages connectées, `sales-region.js`,
+Publier ensemble les trois pages connectées, `sales-region.js`, `guarded-billing.js`,
 `software-subscription.js`, `compte.js`, `portail-roles.js`,
 `account-management.css` et les fichiers du lot de gestion du compte dont ils
 dépendent. La racine du dépôt est la source du site, pas l'ancien sous-dossier.

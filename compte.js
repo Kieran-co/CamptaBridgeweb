@@ -257,10 +257,10 @@ async function startIndividualBillingCheckout() {
     const data = await request("billing/checkout", {
       method: "POST",
       headers: { Authorization: `Bearer ${sessionValue(keys.token)}` },
-      body: JSON.stringify({ scope_customer_id: "", billing_country: billingCountry }),
+      body: JSON.stringify({ scope_customer_id: "", billing_country: billingCountry, accept_terms: true }),
     });
     if (!data.checkout_url) throw new Error("Stripe n’a pas fourni de lien de paiement.");
-    window.location.assign(data.checkout_url);
+    window.location.assign(window.ComptaBridgeSalesRegion.paymentUrl(data.checkout_url));
   } catch (error) {
     if (action) {
       action.disabled = false;
