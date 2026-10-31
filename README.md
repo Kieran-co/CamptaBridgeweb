@@ -1,43 +1,39 @@
-# Site local ComptaBridge
+# Site ComptaBridge
 
-## Reprise sur un autre ordinateur
+Vitrine et espace client statiques du dépôt `Kieran-co/CamptaBridgeweb`.
+Le logiciel Windows et l'API appartiennent au dépôt distinct `Kieran-co/ComptaBridge`.
 
-Lire [REPRISE_CODEX.md](REPRISE_CODEX.md) sur la branche
-`audit/reprise-20261017` pour le contexte actuel du site, le lien vers le dépôt
-logiciel/API et les contrôles restant à effectuer. Le reste de ce README conserve
-des informations historiques de préparation.
+La préparation actuelle de la sortie Windows est décrite dans
+[SORTIE_WINDOWS_WEB.md](SORTIE_WINDOWS_WEB.md). Le relevé juridique se trouve dans
+[legal/AUDIT_SORTIE_WINDOWS.md](legal/AUDIT_SORTIE_WINDOWS.md). Ces documents
+remplacent les anciennes consignes de précommercialisation pour cette préparation ;
+[REPRISE_CODEX.md](REPRISE_CODEX.md) conserve le contexte historique.
 
-Vitrine commerciale locale, prête pour la pré-commercialisation. Elle ne
-contient aucun paiement : les offres commerciales restent informatives jusqu'à
-la création de la société et la validation des documents juridiques.
+## Aperçu et contrôles
 
-## Aperçu local
+```bash
+npm ci --ignore-scripts
+npx playwright install chromium
+npm run check
+npm test
+python3 -m http.server 8765 --bind 127.0.0.1
+```
 
-Depuis ce dossier, lancer un serveur statique puis ouvrir `index.html` dans le
-navigateur. L'aperçu utilisé pendant la préparation est :
+Ouvrir `http://127.0.0.1:8765/`. Les tests navigateur utilisent des réponses
+simulées, sans paiement, compte de production ou e-mail réel. Avec Chromium déjà
+installé, définir `CHROMIUM_EXECUTABLE_PATH` vers son exécutable.
 
-`http://127.0.0.1:8765/`
+## Téléchargement et publication
 
-Les boutons de téléchargement pointent vers la dernière release GitHub. Les
-liens juridiques sont encore des modèles et doivent être complétés puis
-relus avant toute vente.
+`telecharger.html` lit `windows-release.json`. L'état livré est `preparation` :
+aucun installateur de la nouvelle version n'est proposé. Une version stable doit
+être expressément sélectionnée et correspondre au fichier publié dans le dépôt
+public `Kieran-co/ComptaBridge-Releases`. Le dépôt des sources privées ne sert pas
+aux téléchargements clients. La page ne publie aucune release et n'ouvre pas les ventes.
 
-## Confidentialité
-
-- Les visuels n'utilisent aucun relevé réel.
-- La version gratuite est téléchargeable immédiatement ; le contact commercial
-  passe par l’adresse e-mail affichée sur le site.
-
-## Publication
-
-Ne pas publier avant validation :
-
-1. confirmer les banques annoncées comme compatibles et le tarif de lancement ;
-2. remplacer les modèles juridiques par les informations de la société avant toute vente ;
-3. vérifier le domaine, le HTTPS et le lien vers la release 1.0.0-beta.10.44.
-
-## Référencement
-
-`robots.txt` autorise maintenant l'indexation de la vitrine et déclare
-`sitemap.xml`. Les pages juridiques restent explicitement des modèles tant que
-les informations de la société ne sont pas connues.
+Publier uniquement les fichiers publics relus et leurs ressources, après validation
+humaine : jamais `.git`, `node_modules`, les tests, les documents de reprise,
+les modèles juridiques Markdown ou des secrets. Les pages HTML juridiques ont été
+actualisées ; des informations éditeur et vérifications restent à compléter avant
+commercialisation, comme indiqué dans l'audit. Un test logiciel n'est pas une
+validation juridique ni une preuve de paiement ou de licence opérationnelle.

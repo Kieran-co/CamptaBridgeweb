@@ -1,0 +1,18 @@
+.windows-shell { width: min(960px, calc(100% - 32px)); margin: 45px auto 70px; }
+.windows-hero { padding: 40px 0; }
+.windows-hero h1 { font-size: clamp(2.5rem, 7vw, 4.7rem); line-height: 1.08; letter-spacing: -.045em; margin: 22px 0; }
+.windows-hero h1 span { color: #62e6b7; }
+.windows-hero p { max-width: 760px; color: #b5c9d9; line-height: 1.8; }
+.windows-offer strong { color: #fff; }
+.windows-card { padding: 28px; margin: 20px 0; border: 1px solid #2e506a; border-radius: 20px; background: linear-gradient(135deg, #143b5b, #0c2236 65%, #0c2c2b); }
+.windows-card h2 { margin-top: 0; }
+.windows-card p, .windows-card li { color: #c2d4df; line-height: 1.8; }
+.windows-card li { margin: 12px 0; padding-left: 5px; }
+.windows-card a:not(.button) { color: #80eec9; }
+.windows-card pre { overflow-x: auto; padding: 15px; border-radius: 10px; background: #07111d; }
+.windows-digest { display: block; overflow-wrap: anywhere; color: #a8f4d9; }
+.windows-card summary { cursor: pointer; padding: 15px 0; }
+.windows-card [hidden] { display: none !important; }
+.windows-card .button { margin: 12px 0; max-width: 100%; white-space: normal; }
+.windows-card a:focus-visible, .windows-card button:focus-visible, .windows-card summary:focus-visible { outline: 3px solid #92f5d7; outline-offset: 4px; }
+@media (max-width: 560px) { .windows-shell { margin-top: 20px; } .windows-card { padding: 22px 18px; } .windows-hero { padding: 25px 0; } }

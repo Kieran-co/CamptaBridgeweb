@@ -1,7 +1,9 @@
 # Annonce du logiciel de facturation
 
-- Lancement prévu : 29 octobre 2026 à 09:00, heure de Paris.
-- Date technique : `2026-10-29T09:00:00+01:00` (Paris sera à l'heure d'hiver).
+- La disponibilité est désormais indiquée par `telecharger.html` et la configuration
+  explicite `windows-release.json`, initialement en préparation. La date initialement
+  annoncée du 29 octobre 2026 ne déclenche aucune ouverture. Voir
+  [SORTIE_WINDOWS_WEB.md](SORTIE_WINDOWS_WEB.md).
 - Offre annoncée : 9,99 € HT/mois pour la facturation en autonomie Windows 64 bits.
 - Documents, clients et produits illimités ; support, mises à jour courantes et
   futures versions majeures inclus pendant l'abonnement actif.
@@ -18,16 +20,15 @@ Mettre à jour l'API (module `api/launch_alerts.py`, initialisé depuis `api/mai
 avant de publier le formulaire. Réutiliser les paramètres SMTP existants, sans
 les afficher ni les changer. La table SQLite est ajoutée au démarrage.
 
-Publier ensemble `index.html`, `launch.css`, `launch.js`, `launch-alerts.js`,
+Les ressources de l’annonce comprennent `index.html`, `launch.css`, `launch-alerts.js`,
 `alerte-facturation.html`, `administration.html`, `launch-admin.js` et
 `legal/confidentialite.html`, en conservant ce dernier chemin de sous-dossier.
 Conserver le `styles.css` existant : les styles de l'annonce sont isolés.
 Ne pas publier le dossier `.build`, qui ne contient que les contrôles locaux.
 
-Le compteur se met à jour chaque seconde. Sans JavaScript, la date et l'offre
-restent visibles. À l'échéance, le compteur s'efface et invite à vérifier la
-disponibilité par contact : il n'active ni vente ni téléchargement de lui-même.
-L'annonce ne remplace pas la validation de la disponibilité réelle au lancement.
+Le compteur daté a été retiré de la vitrine ; `launch.js` est conservé dans les
+sources historiques mais n'est plus chargé par l'accueil. La page de téléchargement
+vérifie une version stable explicitement sélectionnée, sans ouvrir les ventes.
 
 ## Envoi depuis l'administration
 
@@ -52,6 +53,6 @@ compteurs ou d'un envoi. Aucun ordonnanceur de purge périodique n'est ajouté.
 Les tests utilisent des e-mails fictifs et un service d'envoi simulé ; une recette
 SMTP réelle avec une adresse contrôlée reste nécessaire après déploiement.
 
-Pour reporter la date, modifier de façon cohérente la bannière, la date visible,
-les attributs `datetime` et `data-software-launch`, ainsi que le renvoi présent
-dans la zone tarifs. Garder un décalage UTC explicite pour Paris.
+Pour une disponibilité publique, suivre la sélection de version décrite dans
+`SORTIE_WINDOWS_WEB.md`. Le formulaire d’alerte et son envoi manuel restent
+indépendants du téléchargement et de l’ouverture des ventes.

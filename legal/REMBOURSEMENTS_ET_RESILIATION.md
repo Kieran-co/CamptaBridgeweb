@@ -1,25 +1,23 @@
-# Rétractation, remboursements et résiliation
+# Remboursements et résiliation — offre professionnelle
 
-## Consommateurs
+La page destinée aux clients est [remboursements.html](remboursements.html).
+Les CGV actuelles réservent les offres aux professionnels agissant pour leur
+activité ; ne pas substituer l'ancien modèle consommateur à ce périmètre.
 
-Pour une souscription à distance, le client consommateur dispose en principe d'un délai légal de 14 jours pour exercer son droit de rétractation, sous réserve des exceptions prévues par la loi.
+La résiliation s'effectue depuis « Abonnements et compte » et la confirmation
+du portail sécurisé. Elle arrête le renouvellement en fin de période payée.
+Le logiciel et le service web accompagné sont des abonnements distincts.
 
-Si le client demande expressément que l'abonnement commence immédiatement, le parcours de commande doit recueillir séparément :
+La suppression du compte, protégée par le mot de passe et une confirmation,
+ferme immédiatement le compte et arrête les abonnements qu'il gère. Elle
+n'entraîne aucun remboursement automatique et n'efface pas les fichiers locaux.
 
-1. sa demande d'exécution avant la fin du délai ;
-2. la confirmation qu'il a reçu l'information sur les conséquences de cette demande ;
-3. lorsque la loi le prévoit, sa reconnaissance de la perte du droit de rétractation après commencement de l'exécution du contenu numérique.
+Les demandes de remboursement et erreurs de paiement sont examinées par le
+support, en préservant les droits légaux applicables. Aucune garantie commerciale
+de remboursement à 30 jours n'a été confirmée par l'éditeur ; l'ancien texte
+conditionnel ne doit pas être présenté comme une garantie acquise.
 
-Le parcours et les textes définitifs doivent être validés juridiquement avant activation du paiement.
-
-## Remboursement commercial ComptaBridge
-
-En plus des droits légaux, ComptaBridge peut proposer une garantie de lancement : demande dans les 30 jours, accompagnée d'une description du problème et d'une tentative raisonnable de résolution avec le support. Cette garantie ne limite jamais les droits légaux du client.
-
-Les doubles paiements et paiements encaissés par erreur sont remboursés après vérification. Un remboursement accepté est effectué via le moyen de paiement d'origine lorsque cela est techniquement possible.
-
-## Résiliation
-
-La résiliation stoppe le renouvellement futur. Sauf droit légal, geste commercial ou défaillance imputable au service, la période déjà commencée reste due et l'accès est conservé jusqu'à son terme.
-
-Le bouton de résiliation doit être accessible en ligne et une confirmation durable doit être envoyée au client.
+Si une situation ouvre un droit impératif de rétractation, celui-ci reste
+applicable. Une acceptation générale des CGV ou un enregistrement de carte
+ne valent pas consentement séparé à une renonciation. Faire relire le périmètre
+contractuel et les règles de rétractation applicables avant publication.
