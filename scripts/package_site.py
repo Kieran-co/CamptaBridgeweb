@@ -34,6 +34,11 @@ Les autres fichiers de cette archive sont des instructions : ne pas les publier.
    le fichier caché .htaccess. Ne supprimez pas les autres fichiers du serveur.
 4. Vérifiez https://comptabridge.fr/telecharger.html et les pages legal/.
 
+Cette préparation présente une entreprise émettrice par abonnement logiciel.
+Elle nécessite l’API de rattachement /software/company et Windows beta.6 ou
+une version compatible. L’API1288 actuellement installée ne contient pas ces
+contrôles : ne pas ouvrir les ventes avec cette seule mise à jour des pages.
+
 La nouvelle version Windows reste en préparation sur la page publique.
 Cette archive ne contient pas l'installateur et n'ouvre pas les ventes.
 Elle ne met pas à jour l'API ou les paramètres Stripe.
