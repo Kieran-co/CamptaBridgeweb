@@ -25,7 +25,7 @@
     pending = false; root.replaceChildren(); root.hidden = !current;
     if (!current) return;
     root.append(node('h2', 'Mon logiciel de facturation'));
-    root.append(node('p', '9,99 € HT/mois · Facturation seule · Clients et documents illimités · Tous vos appareils. La TVA applicable est calculée au paiement.'));
+    root.append(node('p', '9,99 € HT/mois · Une entreprise émettrice · Clients et documents illimités · Tous vos appareils. La TVA applicable est calculée au paiement.'));
     root.append(node('p', 'Souscription réservée aux adresses de facturation en France, outre-mer compris.'));
     const status = node('p'); status.className = 'form-status'; status.setAttribute('role', 'status'); root.append(status);
     let data;

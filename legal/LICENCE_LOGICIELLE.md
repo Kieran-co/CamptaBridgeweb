@@ -2,7 +2,8 @@
 
 ComptaBridge est concédé sous licence, il n'est pas vendu. Sous réserve du paiement et du respect de l'offre, le client reçoit un droit limité, personnel, non exclusif et non transférable d'installer et d'utiliser le logiciel pour ses besoins professionnels pendant la durée de l'abonnement.
 
-L'offre Facturation à 9,99 € HT/mois inclut tous les appareils du même utilisateur,
+L'offre Facturation à 9,99 € HT/mois couvre une entreprise émettrice (SIREN ou
+identifiant local équivalent), ses établissements et tous les appareils du même utilisateur,
 sans plafond fixe de postes, et les clients et documents illimités, sans quota
 commercial par document créé dans le logiciel. Les limites techniques de
 synchronisation, de partage et des appareils restent applicables. Le service web
@@ -26,3 +27,9 @@ Les conditions applicables à la souscription, au renouvellement, à la résilia
 et à la fermeture du compte sont présentées dans la page publique `cgv.html`.
 La fermeture du compte ne supprime pas à distance les fichiers et sauvegardes
 stockés sur les appareils.
+
+Le rattachement est explicite et partagé entre les appareils. Une correction
+avant la première autorisation d’émission ou réservation demande le mot de passe
+actuel ; après cette étape, elle relève du support, sans effacement des documents.
+Une autre unité légale nécessite son propre abonnement. Les émissions du nouvel
+abonnement nécessitent une version compatible et une connexion au service.

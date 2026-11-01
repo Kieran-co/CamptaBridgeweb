@@ -24,3 +24,7 @@
 .guarded-purchase { display: grid; gap: .75rem; margin-block: 1rem; padding-block: 1rem; border-block-end: 1px solid #64748b; overflow-wrap: anywhere; }
 [data-guarded-billing][hidden] { display: none; }
 .software-purchase-form select { display: block; width: 100%; box-sizing: border-box; margin-block-start: .5rem; padding: .8rem; background: #fff; color: #0f172a; border: 1px solid #64748b; border-radius: .5rem; }
+
+[data-software-company][hidden] { display: none; }
+[data-software-company] { overflow-wrap: anywhere; }
+[data-software-company] > button { margin-block-start: .75rem; }

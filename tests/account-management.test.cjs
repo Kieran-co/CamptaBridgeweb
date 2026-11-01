@@ -27,6 +27,7 @@ async function open(t, options = {}) {
   const page = await context.newPage();
   const requests = [];
   const errors = [];
+  let companyState = structuredClone(options.company || { policy: '' });
   page.on('pageerror', error => errors.push(error.message));
   await page.route('**/*', async route => {
     const req = route.request(), url = new URL(req.url());
@@ -43,6 +44,19 @@ async function open(t, options = {}) {
     if (/^billing\/purchases\/[^/]+\/prepare$/.test(endpoint)) { data = options.prepared || (options.purchases || [])[0] || {}; status = options.prepareStatus || 200; }
     if (/^billing\/purchases\/[^/]+\/invoices$/.test(endpoint)) data = { invoices: [{ number: 'FACTURE-RECETTE', status: 'paid', amount_cents: 1199, url: checkedPurchase.checkout_url }] };
     if (/^billing\/purchases\/[^/]+\/portal$/.test(endpoint)) data = { portal_url: 'https://billing.stripe.com/p/checked-fixture' };
+    if (endpoint === 'software/company') {
+      if (req.method() === 'GET' && options.waitCompany) await options.waitCompany;
+      if (req.method() === 'POST') {
+        status = options.companyStatus || 200;
+        if (status === 200) {
+          const body = req.postDataJSON();
+          companyState = { ...companyState, company: { scheme: body.scheme,
+            value: body.scheme === 'SIREN' ? body.value.replace(/\s/g, '').slice(0, 9) : body.value,
+            country: body.scheme === 'SIREN' ? 'FR' : body.scheme === 'RIDET' ? 'NC' : 'PF' }, revision: companyState.revision + 1 };
+        }
+      }
+      data = status === 200 ? companyState : { detail: 'Le mot de passe actuel est incorrect.' };
+    }
     if (endpoint === 'software/status') data = options.software || { sales_enabled: false, status: 'none' };
     if (endpoint === 'software/checkout') {
       data = options.purchase || { checkout_url: 'https://checkout.stripe.com/c/pay/software-fixture' };
@@ -324,4 +338,84 @@ test('paiement contrôlé : historique des factures accessible depuis le compte'
 test('paiement contrôlé : logiciel annonce l’enregistrement sans débit pour le mode correspondant', async t => {
   const { page } = await open(t, { software: { status: 'none', sales_enabled: true, payment_flow: 'checked_invoices_v1' } });
   await page.locator('[data-software-subscription]').getByText(/Votre carte sera enregistrée sans débit/).waitFor();
+});
+
+const companyPolicy = { policy: 'single_company_v1', can_bind: true, company: null, revision: 0, locked: false };
+test('entreprise : choix explicite, SIRET ramené au SIREN et aucun paiement lancé', async t => {
+  const { page, requests, errors } = await open(t, { company: companyPolicy });
+  const root = page.locator('[data-software-company]');
+  await root.getByRole('heading', { name: 'Mon entreprise émettrice' }).waitFor();
+  await root.getByLabel('Identifiant de l’entreprise').fill('99999999800019');
+  await root.getByRole('button', { name: 'Rattacher mon entreprise' }).click();
+  assert.equal(requests.filter(req => req.endpoint === 'software/company' && req.method === 'POST').length, 0);
+  await root.getByRole('checkbox').check();
+  await root.getByRole('button', { name: 'Rattacher mon entreprise' }).click();
+  await root.getByText('Entreprise rattachée : SIREN 999999998.').waitFor();
+  const action = requests.find(req => req.endpoint === 'software/company' && req.method === 'POST');
+  assert.deepEqual(action.body, { scheme: 'SIREN', value: '99999999800019', confirm: true, expected_revision: 0 });
+  assert.equal(action.authorization, 'Bearer fixture-token');
+  assert.equal(requests.filter(req => req.endpoint === 'software/checkout').length, 0);
+  assert.deepEqual(errors, []);
+});
+test('entreprise : après autorisation seul le support propose une correction', async t => {
+  const { page, requests } = await open(t, { company: { ...companyPolicy, locked: true, revision: 1,
+    company: { scheme: 'SIREN', value: '999999998', country: 'FR' } } });
+  const root = page.locator('[data-software-company]');
+  await root.getByRole('link', { name: 'Contacter le support' }).waitFor();
+  assert.equal(await root.locator('form').count(), 0);
+  assert.equal(await root.getByRole('link').getAttribute('href'), 'mailto:support@comptabridge.fr');
+  assert.equal(requests.filter(req => req.endpoint === 'software/company' && req.method === 'POST').length, 0);
+});
+test('entreprise : correction protégée par mot de passe et révision, sans conserver le mot de passe', async t => {
+  const { page, requests } = await open(t, { companyStatus: 403, company: { ...companyPolicy, revision: 2,
+    company: { scheme: 'SIREN', value: '999999998', country: 'FR' } } });
+  const root = page.locator('[data-software-company]');
+  await root.getByLabel('Identifiant de l’entreprise').fill('888888888');
+  await root.getByRole('checkbox').check();
+  await root.getByRole('button', { name: 'Corriger le rattachement' }).click();
+  assert.equal(requests.filter(req => req.endpoint === 'software/company' && req.method === 'POST').length, 0);
+  await root.getByLabel('Mot de passe actuel').fill('FICTITIOUS_PASSWORD_ONLY');
+  await root.getByRole('button', { name: 'Corriger le rattachement' }).click();
+  await root.getByText('Le mot de passe actuel est incorrect.').waitFor();
+  assert.equal(await root.getByLabel('Mot de passe actuel').inputValue(), '');
+  const action = requests.find(req => req.endpoint === 'software/company' && req.method === 'POST');
+  assert.equal(action.body.expected_revision, 2); assert.equal(action.body.password, 'FICTITIOUS_PASSWORD_ONLY');
+  assert.equal(await page.evaluate(() => Object.values(sessionStorage).some(v => v.includes('FICTITIOUS_PASSWORD_ONLY'))), false);
+});
+test('entreprise : identifiant local distinct du SIREN', async t => {
+  const { page, requests } = await open(t, { company: companyPolicy });
+  const root = page.locator('[data-software-company]');
+  await root.getByLabel('Registre de l’entreprise').selectOption('RIDET');
+  await root.getByLabel('Identifiant de l’entreprise').fill('1234567');
+  await root.getByRole('checkbox').check();
+  await root.getByRole('button', { name: 'Rattacher mon entreprise' }).click();
+  await root.getByText('Entreprise rattachée : RIDET 1234567.').waitFor();
+  const action = requests.find(req => req.endpoint === 'software/company' && req.method === 'POST');
+  assert.equal(action.body.scheme, 'RIDET'); assert.equal(action.body.value, '1234567');
+});
+test('entreprise : abonnement expiré conserve la fiche sans permettre de rattachement', async t => {
+  const { page } = await open(t, { company: { ...companyPolicy, can_bind: false, revision: 1,
+    company: { scheme: 'SIREN', value: '999999998', country: 'FR' } } });
+  const root = page.locator('[data-software-company]');
+  await root.getByText('Entreprise rattachée : SIREN 999999998.').waitFor();
+  assert.equal(await root.locator('form').count(), 0);
+});
+test('entreprise : une réponse retardée ne réaffiche pas le compte déconnecté', async t => {
+  let release;
+  const waitCompany = new Promise(resolve => { release = resolve; });
+  const { page } = await open(t, { company: companyPolicy, waitCompany });
+  await page.evaluate(() => { sessionStorage.removeItem('comptabridge_account_token'); window.dispatchEvent(new Event('comptabridge:session-changed')); });
+  release();
+  await page.waitForTimeout(100);
+  assert.equal(await page.locator('[data-software-company]').isHidden(), true);
+});
+test('entreprise : formulaire lisible à 390 pixels', async t => {
+  const { page, errors } = await open(t, { company: companyPolicy, mobile: true });
+  const root = page.locator('[data-software-company]');
+  await root.getByRole('button', { name: 'Rattacher mon entreprise' }).waitFor();
+  const checkbox = await root.getByRole('checkbox').boundingBox();
+  assert.ok(checkbox.width <= 24 && checkbox.height <= 24, JSON.stringify(checkbox));
+  const dimensions = await root.evaluate(el => ({ width: el.clientWidth, content: el.scrollWidth }));
+  assert.ok(dimensions.content <= dimensions.width + 1, JSON.stringify(dimensions));
+  assert.deepEqual(errors, []);
 });
