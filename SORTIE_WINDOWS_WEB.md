@@ -66,3 +66,12 @@ les liens juridiques, puis les parcours connectés sur un compte de recette.
 Les contrôles de paiement/licence Live, de renouvellement, de résiliation,
 de fermeture, de fiscalité des offres web et de signature restent des étapes
 séparées. La mise à jour du site ne configure aucun paramètre du VPS ou de Stripe.
+
+## Récupérer l'archive prête à relire
+
+Après les tests, la CI prépare l'artefact `pages-web-<commit>`, contenant
+`ComptaBridge-pages-web.zip`. Il comprend `site/` (fichiers publics sélectionnés),
+un manifeste SHA-256 et des instructions séparées. Pour reproduire le paquet :
+`python3 scripts/package_site.py`. Les sources, dépendances, anciens visuels et
+modèles juridiques internes n'y entrent pas. Seuls le logo et l'image sociale
+référencés par les pages actuelles sont inclus parmi les visuels.
