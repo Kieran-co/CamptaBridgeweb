@@ -64,3 +64,15 @@ couvrent le consentement, la séparation du paiement web/logiciel, l'ouverture d
 ventes, le retour sans confirmation, la licence active, les erreurs et la
 redirection. Tous les appels externes sont interceptés, sans paiement ni compte
 réel. Les résultats exacts et SHA sont consignés dans la PR.
+
+## Entreprise émettrice unique
+
+L’offre couvre une unité légale (SIREN, ou identifiant local équivalent), ses
+établissements et les appareils du même utilisateur, avec clients et documents
+illimités. `software-company.js` affiche le rattachement depuis `/software/company`.
+Le premier choix est explicite ; une correction avant la première autorisation
+nécessite le mot de passe actuel et la révision lue. Après usage, le support traite
+les corrections. Aucune suppression de profil ne réinitialise l’abonnement.
+Publier ensemble les trois espaces connectés et le nouveau script après livraison
+de l’API correspondante ; une nouvelle build Windows compatible est nécessaire.
+Le prix Stripe existant ne change pas et aucune vente n’est ouverte par ces pages.

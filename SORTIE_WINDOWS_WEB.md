@@ -75,3 +75,13 @@ un manifeste SHA-256 et des instructions séparées. Pour reproduire le paquet :
 `python3 scripts/package_site.py`. Les sources, dépendances, anciens visuels et
 modèles juridiques internes n'y entrent pas. Seuls le logo et l'image sociale
 référencés par les pages actuelles sont inclus parmi les visuels.
+
+## Nouvelle règle commerciale — entreprise émettrice
+
+La nouvelle branche propose une entreprise par abonnement logiciel, avec clients
+et documents illimités, établissements et appareils du même utilisateur inclus.
+`software-company.js` est chargé par les trois espaces et requiert l’API de
+rattachement correspondante. Une nouvelle candidate Windows beta.6 est préparée
+pour le certificat signé de schéma2 et le contrôle des émissions. Ne pas ouvrir
+les ventes sur l’API1288 actuelle en se fondant sur le seul transfert des pages.
+La préparation historique du site ne constitue pas une livraison de ce nouveau lot.

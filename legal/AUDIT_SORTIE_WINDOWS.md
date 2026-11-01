@@ -51,3 +51,18 @@ Les anciens fichiers `*_TEMPLATE.md` et le formulaire consommateur restent des
 modèles internes avec champs à compléter ; ils ne sont pas les pages HTML
 servies au public. La publication doit porter sur les pages HTML relues et leurs
 ressources, sans exposer ces modèles ni les états privés de préparation.
+
+## Entreprise unique — préparation complémentaire
+
+L’éditeur a retenu une entreprise émettrice par abonnement logiciel, avec clients
+et documents illimités et tous les appareils du même utilisateur. Les textes de
+cette branche, le nouveau parcours de rattachement/correction et la candidate
+Windows compatible sont préparés ensemble. Le rattachement déclaré à un SIREN
+ou identifiant local n’est pas une vérification de registre ni une preuve fiscale.
+Les anciens documents ne sont ni effacés ni réattribués. Les anciens contrats
+manuels ne sont pas modifiés rétroactivement.
+
+Les identifiants locaux dans le rattachement ne prouvent pas une prise en charge
+complète de l’émission Factur-X ou de la fiscalité de chaque territoire : une
+recette spécifique demeure requise. L’ouverture des ventes et la publication
+restent distinctes de ce changement documentaire et des tests.
