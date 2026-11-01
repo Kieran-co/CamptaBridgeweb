@@ -13,7 +13,7 @@ Aucun déploiement OVH, merge, encaissement ou publication stable n'est effectu�
   Les alertes restent soumises au consentement et à l'envoi manuel autorisé.
 - `windows-release.json` est en préparation ; aucun nouveau fichier public
   n'est proposé. La candidate privée Windows `1.1.1-beta.5` n'est pas une release stable.
-- 41 tests navigateur réussis localement sans échec ni test ignoré ; contrôles
+- 42 tests navigateur réussis localement sans échec ni test ignoré ; contrôles
   syntaxiques réussis. API, Stripe, GitHub et e-mails simulés dans ces tests.
 - Aperçus à 1280 et 390 pixels vérifiés. Aucun débordement horizontal dans les
   contrôles de page de téléchargement. Aucun accès API/paiement réel testé.
@@ -50,6 +50,10 @@ Pour revenir à l'état de préparation, rétablir le fichier livré dans cette 
 Ne pas modifier l'updater Windows pour contourner les vérifications de signature.
 
 ## Publication du site à préparer séparément
+
+Conserver le fichier `.htaccess` fourni : la politique CSP autorise précisément
+`api.github.com` pour la vérification des versions, en plus de l’API ComptaBridge.
+Les tests de téléchargement appliquent cette politique au navigateur.
 
 Publier les fichiers publics racine `.html`, `.css`, `.js`, `robots.txt`,
 `sitemap.xml`, `windows-release.json`, le dossier `assets/`, et les pages

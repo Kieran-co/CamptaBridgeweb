@@ -31,7 +31,7 @@ aucun installateur de la nouvelle version n'est proposé. Une version stable doi
 public `Kieran-co/ComptaBridge-Releases`. Le dépôt des sources privées ne sert pas
 aux téléchargements clients. La page ne publie aucune release et n'ouvre pas les ventes.
 
-Publier uniquement les fichiers publics relus et leurs ressources, après validation
+Publier uniquement les fichiers publics relus, le `.htaccess` fourni et leurs ressources, après validation
 humaine : jamais `.git`, `node_modules`, les tests, les documents de reprise,
 les modèles juridiques Markdown ou des secrets. Les pages HTML juridiques ont été
 actualisées ; des informations éditeur et vérifications restent à compléter avant

@@ -6,11 +6,15 @@ const path = require('node:path');
 const { chromium } = require('playwright');
 let server, browser, origin;
 before(async () => {
+  const apache = await readFile('.htaccess', 'utf8');
+  const policy = apache.match(/Header always set Content-Security-Policy "([^"]+)"/);
+  assert.ok(policy, 'La politique CSP Apache doit être appliquée à la recette navigateur.');
   server = http.createServer(async (req, res) => {
     try {
       const file = path.resolve('.', '.' + new URL(req.url, 'http://localhost').pathname);
       if (!file.startsWith(process.cwd() + path.sep) || file.includes('/.git/')) throw new Error('outside');
       const data = await readFile(file);
+      res.setHeader('Content-Security-Policy', policy[1]);
       res.setHeader('Content-Type', file.endsWith('.js') ? 'text/javascript' : file.endsWith('.css') ? 'text/css' : file.endsWith('.html') ? 'text/html' : 'application/json');
       res.end(data);
     } catch { res.writeHead(404); res.end(); }
@@ -122,4 +126,15 @@ test('la vitrine mène à la disponibilité sans ancien compte à rebours ni app
   await page.getByRole('link', { name: 'Version Windows et téléchargement' }).click();
   await page.locator('[data-windows-download]').getByText(/nouvelle version Windows est en préparation/).waitFor();
   assert.deepEqual(requests, []); assert.deepEqual(errors, []);
+});
+
+test('la politique Apache autorise GitHub et bloque les autres destinations', async t => {
+  const { page, root, requests } = await open(t, { config: available });
+  await root.locator('[data-download-link]').waitFor();
+  const outcome = await page.evaluate(async () => {
+    try { await fetch('https://example.com/forbidden'); return 'allowed'; }
+    catch { return 'blocked'; }
+  });
+  assert.equal(outcome, 'blocked');
+  assert.equal(requests.length, 1);
 });
