@@ -11,9 +11,11 @@ l'adresse, le SIREN/SIRET, le RNE, l'hébergeur OVH et le support. Ils sont cons
 Les clés de contrôle des SIREN/SIRET du dépôt passent la vérification de format ;
 cela ne vérifie pas une inscription actuelle au registre ni la réalité d'une adresse.
 
-Le numéro de TVA intracommunautaire et le téléphone professionnel ne sont pas
-renseignés dans les sources. Ils ont été demandés à l'éditeur. Ne pas fabriquer
-un numéro de TVA à partir d'une formule et ne pas publier un faux numéro de contact.
+Le 1 novembre 2026, l’éditeur a communiqué le numéro de TVA `FR89884987124`
+et le téléphone `06 30 54 15 11`, ajoutés aux mentions légales avec un lien
+téléphonique international. Le numéro de TVA reprend le SIREN déjà présent et
+sa clé numérique est cohérente. Ce contrôle de format ne confirme ni une
+immatriculation TVA active ni une vérification auprès de VIES ou du registre.
 
 ## Corrections préparées
 
@@ -29,7 +31,8 @@ un numéro de TVA à partir d'une formule et ne pas publier un faux numéro de c
 
 ## Vérifications restant à obtenir avant publication
 
-- Confirmation de l'identité, de l'adresse, du numéro de TVA et du téléphone par l'éditeur.
+- Confirmation de l'identité et de l'adresse par l'éditeur ; numéro de TVA et téléphone
+  désormais fournis. L’état fiscal actif n’est pas vérifié par le contrôle de format.
 - Relecture du périmètre professionnel, des clauses contractuelles et des droits
   impératifs applicables ; pas de validation juridique déduite de tests logiciels.
 - Formalisation des obligations de sous-traitance pour les données des clients

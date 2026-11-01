@@ -25,8 +25,10 @@ Le dossier site/ contient les fichiers publics à relire.
 Les autres fichiers de cette archive sont des instructions : ne pas les publier.
 
 1. Sauvegardez le site actuellement présent sur OVH.
-2. Avant publication : complétez le numéro de TVA et le téléphone professionnel,
-   confirmez l'identité éditeur et faites relire les documents contractuels.
+2. Le téléphone et le numéro de TVA ont été fournis par l’éditeur et intégrés.
+   Avant publication, confirmez l’identité et l’adresse de l’éditeur et faites
+   relire les documents contractuels. Le contrôle de format du numéro de TVA
+   ne confirme pas son état fiscal actif.
 3. Après validation, transférez le CONTENU de site/ dans le dossier du site OVH
    contenant déjà index.html (souvent www/). Conservez assets/ et legal/ ainsi que
    le fichier caché .htaccess. Ne supprimez pas les autres fichiers du serveur.
