@@ -1,8 +1,7 @@
 name: Web account tests
 on:
-  pull_request:
-  push:
-    branches: [main, audit/reprise-20261017]
+  # Hosted runs are disabled under the user's local-validation budget policy.
+  workflow_dispatch:
 permissions:
   contents: read
 jobs:

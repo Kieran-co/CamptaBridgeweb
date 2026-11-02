@@ -2,6 +2,7 @@ const { before, after, test } = require('node:test');
 const assert = require('node:assert/strict');
 const http = require('node:http');
 const { readFile } = require('node:fs/promises');
+const { mkdir } = require('node:fs/promises');
 const path = require('node:path');
 const { chromium } = require('playwright');
 let server, browser, origin;
@@ -17,10 +18,16 @@ before(async () => {
   });
   await new Promise(resolve => server.listen(0, '127.0.0.1', resolve));
   origin = `http://127.0.0.1:${server.address().port}`;
+  if (process.env.CB_PREVIEW_DIR) await mkdir(process.env.CB_PREVIEW_DIR, { recursive: true });
   browser = await chromium.launch({ headless: true, ...(process.env.CHROMIUM_EXECUTABLE_PATH ? { executablePath: process.env.CHROMIUM_EXECUTABLE_PATH } : {}) });
 });
 after(async () => { await browser?.close(); if (server) await new Promise(resolve => server.close(resolve)); });
 const subscription = { subscription_id: 'sub_fixture', scope_name: 'EntrepriseDeDémonstrationAuNomVolontairementTrèsLongPourLaRecetteMobile', product: 'web', status: 'active', cancellation_scheduled: false, period_end: 0 };
+async function showView(page, name) {
+  if (!await page.locator('[data-client-workspace]').count()) return;
+  if (await page.locator('#client-view-select').isVisible()) await page.locator('#client-view-select').selectOption(name);
+  else await page.locator(`[data-client-view="${name}"]`).click();
+}
 async function open(t, options = {}) {
   const context = await browser.newContext({ viewport: options.mobile ? { width: 390, height: 844 } : { width: 1280, height: 900 } });
   t.after(() => context.close());
@@ -37,7 +44,12 @@ async function open(t, options = {}) {
     requests.push({ endpoint, method: req.method(), body: req.postDataJSON(), authorization: req.headers().authorization });
     let data = { documents: [], clients: [], accounts: [], requests: [], events: [] }, status = 200;
     if (endpoint === 'auth/profile') data = { email: 'fixture@example.com', first_name: 'Recette', last_name: 'Fictive', company_name: 'Démo', role: options.role || 'client' };
-    if (endpoint === 'auth/billing/status') data = options.webBilling || { status: 'active', used: 0, included: 25, remaining: 25 };
+    if (endpoint === 'auth/billing/status') {
+      if (options.waitWebBilling) await options.waitWebBilling;
+      data = options.webBilling || { status: 'active', used: 0, included: 25, remaining: 25 };
+      status = options.webStatus || 200;
+    }
+    if (endpoint === 'portal/documents') { if (options.waitDocuments) await options.waitDocuments; data = { documents: options.documents || [] }; }
     if (endpoint === 'portal/clients') data = { clients: options.clients || [] };
     if (endpoint === 'billing/checkout') data = { checkout_url: 'https://checkout.stripe.com/c/pay/web-fixture' };
     if (endpoint === 'billing/purchases') data = { purchases: options.purchases || [] };
@@ -57,7 +69,7 @@ async function open(t, options = {}) {
       }
       data = status === 200 ? companyState : { detail: 'Le mot de passe actuel est incorrect.' };
     }
-    if (endpoint === 'software/status') data = options.software || { sales_enabled: false, status: 'none' };
+    if (endpoint === 'software/status') { data = options.software || { sales_enabled: false, status: 'none' }; status = options.softwareStatus || 200; }
     if (endpoint === 'software/checkout') {
       data = options.purchase || { checkout_url: 'https://checkout.stripe.com/c/pay/software-fixture' };
       status = options.purchaseStatus || 200;
@@ -77,6 +89,9 @@ async function open(t, options = {}) {
     await route.fulfill({ status, contentType: 'application/json', body: JSON.stringify(data) });
   });
   if (!options.anonymous) await context.addInitScript(() => {
+    // Seed once: a real logout reload must not log the fixture back in.
+    if (sessionStorage.getItem('fixture-seeded')) return;
+    sessionStorage.setItem('fixture-seeded', '1');
     sessionStorage.setItem('comptabridge_account_token', 'fixture-token');
     sessionStorage.setItem('comptabridge_account_email', 'fixture@example.com');
     sessionStorage.setItem('comptabridge_invoice_drafts:fixture@example.com', '[]');
@@ -84,14 +99,23 @@ async function open(t, options = {}) {
   });
   await page.goto(`${origin}/${options.page || 'compte.html'}`);
   const root = page.locator('[data-account-management]');
-  if (!options.anonymous && !options.waitManagement) await root.getByText('Supprimer mon compte', { exact: true }).waitFor();
-  return { page, root, requests, errors };
+  const closureRoot = await page.locator('[data-account-closure]').count() ? page.locator('[data-account-closure]') : root;
+  if (!options.anonymous && !options.waitManagement) await closureRoot.getByText('Supprimer mon compte', { exact: true }).waitFor({ state: 'attached' });
+  if (!options.anonymous && options.view !== false) {
+    const view = options.view || (options.purchases || options.prepared ? 'subscriptions' : options.company || options.software ? 'software' : options.webBilling ? 'conversion' : 'subscriptions');
+    await showView(page, view);
+  }
+  return { page, root, closureRoot, requests, errors };
 }
 async function confirmClosure(root, password = 'RecetteCompte123!') {
+  const page = root.page();
+  await showView(page, 'profile');
+  if (await page.locator('[data-account-closure]').count()) root = page.locator('[data-account-closure]');
   await root.locator('summary').click();
   await root.getByLabel('Mot de passe actuel').fill(password);
   await root.getByLabel('Tapez SUPPRIMER pour confirmer').fill('SUPPRIMER');
   await root.getByRole('button', { name: 'Supprimer définitivement mon compte' }).click();
+  return root;
 }
 for (const [name, role] of [['compte.html', 'client'], ['comptable.html', 'accountant'], ['administration.html', 'administrator']]) {
   test(`gestion visible sans débordement sur ${name}, à 390 px`, async t => {
@@ -125,7 +149,8 @@ test('résiliation programmée et absence d’abonnement sont explicites', async
   await second.root.getByText('Aucun abonnement rattaché à ce compte.').waitFor();
 });
 test('le formulaire exige les deux confirmations avant toute suppression', async t => {
-  const { root, requests } = await open(t);
+  const { page, closureRoot: root, requests } = await open(t);
+  await showView(page, 'profile');
   await root.locator('summary').click();
   await root.getByRole('button', { name: 'Supprimer définitivement mon compte' }).click();
   assert.equal(requests.filter(req => req.method === 'DELETE').length, 0);
@@ -136,11 +161,11 @@ test('le formulaire exige les deux confirmations avant toute suppression', async
 });
 test('une erreur conserve la session, efface le mot de passe et permet de réessayer', async t => {
   const { page, root } = await open(t, { deleteStatus: 403, deleteResponse: { detail: 'Le mot de passe actuel est incorrect.' } });
-  await confirmClosure(root, 'incorrect');
-  await root.getByText('Le mot de passe actuel est incorrect.').waitFor();
-  assert.equal(await root.getByLabel('Mot de passe actuel').inputValue(), '');
+  const closure = await confirmClosure(root, 'incorrect');
+  await closure.getByText('Le mot de passe actuel est incorrect.').waitFor();
+  assert.equal(await closure.getByLabel('Mot de passe actuel').inputValue(), '');
   assert.equal(await page.evaluate(() => sessionStorage.getItem('comptabridge_account_token')), 'fixture-token');
-  assert.equal(await root.getByRole('button', { name: 'Supprimer définitivement mon compte' }).isEnabled(), true);
+  assert.equal(await closure.getByRole('button', { name: 'Supprimer définitivement mon compte' }).isEnabled(), true);
 });
 test('une fermeture confirmée nettoie uniquement la session et les brouillons de ce compte', async t => {
   const { page, root, requests } = await open(t);
@@ -189,7 +214,7 @@ test('logiciel : offre séparée, consentement et paiement limité au compte con
   assert.equal(requests.filter(req => req.endpoint === 'billing/checkout').length, 0);
 });
 test('logiciel : ventes fermées sans bouton de paiement', async t => {
-  const { page } = await open(t);
+  const { page } = await open(t, { view: 'software' });
   const root = page.locator('[data-software-subscription]');
   await root.getByText('La souscription au logiciel n’est pas encore ouverte.').waitFor();
   assert.equal(await root.getByRole('checkbox').count(), 0);
@@ -417,5 +442,164 @@ test('entreprise : formulaire lisible à 390 pixels', async t => {
   assert.ok(checkbox.width <= 24 && checkbox.height <= 24, JSON.stringify(checkbox));
   const dimensions = await root.evaluate(el => ({ width: el.clientWidth, content: el.scrollWidth }));
   assert.ok(dimensions.content <= dimensions.width + 1, JSON.stringify(dimensions));
+  assert.deepEqual(errors, []);
+});
+
+// Navigation of the reorganised client area; all API/Stripe requests stay mocked.
+const activeSoftware = { status: 'active', sales_enabled: true, paid_until: 1800000000 };
+const unusedConversion = { status: 'payment_required', allowed: false, trial_remaining: 0 };
+const softwareSubscription = { subscription_id: 'sub_software_fixture', product: 'software', status: 'active', cancellation_scheduled: false, period_end: 1800000000 };
+const historicDocument = { document_id: 'document_fixture', original_name: 'facture-fictive.pdf', status: 'ready', size_bytes: 2048, created_at: '2026-10-01T12:00:00Z', facturx_available: true, facturx_name: 'facturx-fictif.pdf' };
+async function preview(page, name) {
+  if (process.env.CB_PREVIEW_DIR) await page.screenshot({ path: path.join(process.env.CB_PREVIEW_DIR, name), fullPage: true });
+}
+
+test('espace : logiciel seul, accueil centré sur le logiciel sans alerte de conversion', async t => {
+  const { page, requests, errors } = await open(t, { view: false, software: activeSoftware, webBilling: unusedConversion, subscriptions: [softwareSubscription] });
+  await page.locator('#client-product-software').getByText('Actif', { exact: true }).waitFor();
+  assert.equal(await page.locator('[data-client-panel="overview"]').isVisible(), true);
+  assert.equal(await page.locator('#client-product-web').isHidden(), true);
+  assert.equal(await page.locator('#client-discover-web').isVisible(), true);
+  assert.equal(await page.locator('#billing-card').isHidden(), true);
+  assert.equal(await page.locator('#invoice-upload-form').isHidden(), true);
+  assert.ok(requests.every(req => req.method === 'GET'));
+  await preview(page, 'client-logiciel-desktop.png');
+  await page.locator('#client-software-open').click();
+  await page.locator('[data-software-subscription]').getByText('Votre abonnement logiciel est actif.').waitFor();
+  assert.equal(await page.getByRole('link', { name: 'Télécharger le logiciel →' }).isVisible(), true);
+  await preview(page, 'client-rubrique-logiciel.png');
+  assert.deepEqual(errors, []);
+});
+
+test('espace : conversion seule, logiciel proposé discrètement', async t => {
+  const { page, requests, errors } = await open(t, { view: false, software: { status: 'none', sales_enabled: true }, webBilling: { status: 'active', used: 4, included: 25, remaining: 21, base_price_ht_cents: 599 } });
+  await page.locator('#client-product-web').getByText('Actif', { exact: true }).waitFor();
+  assert.equal(await page.locator('#client-product-software').isHidden(), true);
+  assert.equal(await page.locator('#client-discover-software').isVisible(), true);
+  await page.locator('#client-web-open').click();
+  assert.equal(await page.locator('#invoice-upload-form').isVisible(), true);
+  assert.equal(await page.locator('#billing-remaining').innerText(), '21');
+  await preview(page, 'client-rubrique-conversion.png');
+  assert.ok(requests.every(req => req.method === 'GET'));
+  assert.deepEqual(errors, []);
+});
+
+test('espace : deux abonnements visibles, résiliation limitée au logiciel choisi', async t => {
+  const { page, root, requests, errors } = await open(t, { view: false, software: activeSoftware, subscriptions: [subscription, softwareSubscription] });
+  await page.locator('#client-product-software').getByText('Actif', { exact: true }).waitFor();
+  await page.locator('#client-product-web').getByText('Actif', { exact: true }).waitFor();
+  assert.equal(await page.locator('#client-other-services').isHidden(), true);
+  await showView(page, 'subscriptions');
+  assert.equal(await root.getByRole('button', { name: 'Résilier cet abonnement' }).count(), 2);
+  await preview(page, 'client-deux-abonnements.png');
+  const softwareRow = root.locator('.account-subscription').filter({ hasText: 'Logiciel Facturation' });
+  await softwareRow.getByRole('button', { name: 'Résilier cet abonnement' }).click();
+  await page.waitForURL('https://billing.stripe.com/p/fixture');
+  assert.deepEqual(requests.find(req => req.endpoint === 'billing/cancellation').body, { subscription_id: 'sub_software_fixture' });
+  assert.equal(requests.filter(req => req.endpoint === 'billing/cancellation').length, 1);
+  assert.deepEqual(errors, []);
+});
+
+test('espace : aucun abonnement, choix des deux services sans avertissement global', async t => {
+  const { page, requests, errors } = await open(t, { view: false, subscriptions: [], webBilling: { status: 'trial', trial_remaining: 1, allowed: true } });
+  await page.locator('#client-product-web').getByText('À découvrir', { exact: true }).waitFor();
+  await page.locator('#client-product-software').getByText('À découvrir', { exact: true }).waitFor();
+  assert.equal(await page.locator('#client-payment-notice').isHidden(), true);
+  assert.equal(await page.locator('#billing-card').isHidden(), true);
+  assert.ok(requests.every(req => req.method === 'GET'));
+  assert.deepEqual(errors, []);
+});
+
+test('espace : API logiciel indisponible, aucun faux statut inactif ou actif', async t => {
+  const { page, errors } = await open(t, { view: false, softwareStatus: 503 });
+  await page.locator('#client-product-software').getByText('Indisponible', { exact: true }).waitFor();
+  assert.equal(await page.locator('#client-product-software').isVisible(), true);
+  await page.locator('#client-software-open').click();
+  await page.locator('[data-software-subscription]').getByRole('button', { name: 'Réessayer' }).waitFor();
+  assert.equal(await page.locator('[data-software-subscription]').getByRole('button', { name: /S’abonner/ }).count(), 0);
+  assert.deepEqual(errors, []);
+});
+
+test('espace : un abonnement arrêté conserve l’accès aux anciens documents', async t => {
+  const { page, errors } = await open(t, { view: false, software: activeSoftware, webBilling: unusedConversion, documents: [historicDocument], subscriptions: [softwareSubscription] });
+  await page.locator('#client-product-software').getByText('Actif', { exact: true }).waitFor();
+  assert.equal(await page.locator('#client-product-web').isHidden(), true);
+  await showView(page, 'conversion');
+  await page.locator('#invoice-list').getByText('facture-fictive.pdf', { exact: true }).waitFor();
+  assert.equal(await page.locator('#invoice-list').getByRole('button', { name: 'Télécharger le Factur-X' }).isVisible(), true);
+  assert.deepEqual(errors, []);
+});
+
+test('espace : erreur de conversion puis reprise sans inventer un accès', async t => {
+  const options = { view: false, software: activeSoftware, webStatus: 503, webBilling: { status: 'active', remaining: 21, included: 25, used: 4, base_price_ht_cents: 599 } };
+  const { page, requests, errors } = await open(t, options);
+  await page.locator('#client-product-web').getByText('Indisponible', { exact: true }).waitFor();
+  await showView(page, 'conversion');
+  await page.locator('#billing-title').getByText('Statut indisponible', { exact: true }).waitFor();
+  assert.equal(await page.locator('#billing-action').isHidden(), true);
+  assert.equal(await page.locator('#billing-card .billing-metrics').isHidden(), true);
+  options.webStatus = 200;
+  await page.getByRole('button', { name: 'Actualiser mon accès aux conversions' }).click();
+  await page.locator('#billing-remaining').getByText('21', { exact: true }).waitFor();
+  await showView(page, 'overview');
+  await page.locator('#client-product-web').getByText('Actif', { exact: true }).waitFor();
+  assert.ok(requests.every(req => req.method === 'GET'));
+  assert.deepEqual(errors, []);
+});
+
+test('espace : réponses retardées de conversion après déconnexion ignorées', async t => {
+  let release;
+  const gate = new Promise(resolve => { release = resolve; });
+  t.after(() => release());
+  const { page, errors } = await open(t, { view: false, software: activeSoftware, waitWebBilling: gate, waitDocuments: gate, documents: [historicDocument] });
+  await page.locator('#client-product-software').getByText('Actif', { exact: true }).waitFor();
+  await page.locator('#logout-button').click();
+  await page.locator('#login-view').waitFor();
+  release();
+  await page.waitForTimeout(100);
+  assert.equal(await page.locator('#dashboard-view').isHidden(), true);
+  assert.equal(await page.locator('#invoice-list').getByText('facture-fictive.pdf', { exact: true }).count(), 0);
+  assert.notEqual(await page.locator('#profile-email').textContent(), 'fixture@example.com');
+  assert.equal(await page.evaluate(() => sessionStorage.getItem('comptabridge_account_token')), null);
+  assert.deepEqual(errors, []);
+});
+
+test('espace : fin de session sans navigation ignore aussi les documents retardés', async t => {
+  let release;
+  const gate = new Promise(resolve => { release = resolve; });
+  t.after(() => release());
+  const { page, errors } = await open(t, { view: false, software: activeSoftware, waitWebBilling: gate, waitDocuments: gate, documents: [historicDocument] });
+  await page.locator('#client-product-software').getByText('Actif', { exact: true }).waitFor();
+  await page.evaluate(() => clearSession());
+  release();
+  await page.waitForTimeout(100);
+  assert.equal(await page.locator('#dashboard-view').isHidden(), true);
+  assert.equal(await page.locator('#invoice-list').textContent(), '');
+  assert.notEqual(await page.locator('#profile-email').textContent(), 'fixture@example.com');
+  assert.deepEqual(errors, []);
+});
+
+test('espace : retour de paiement ouvre les abonnements sans activation locale', async t => {
+  const { page, requests } = await open(t, { view: false, page: 'compte.html?software=return', software: { status: 'pending', sales_enabled: true } });
+  assert.equal(await page.locator('[data-client-panel="subscriptions"]').isVisible(), true);
+  await showView(page, 'software');
+  await page.locator('[data-software-subscription]').getByText(/la licence sera disponible après confirmation/).waitFor();
+  await showView(page, 'profile');
+  await page.goBack();
+  assert.equal(await page.locator('[data-client-panel="software"]').isVisible(), true);
+  assert.equal(requests.filter(req => req.endpoint === 'software/checkout').length, 0);
+});
+
+test('espace : navigation mobile, cinq rubriques sans débordement', async t => {
+  const { page, requests, errors } = await open(t, { view: false, mobile: true, software: activeSoftware, webBilling: unusedConversion, subscriptions: [softwareSubscription] });
+  await page.locator('#client-product-software').getByText('Actif', { exact: true }).waitFor();
+  await preview(page, 'client-logiciel-mobile.png');
+  for (const view of ['software', 'conversion', 'subscriptions', 'profile', 'overview']) {
+    await showView(page, view);
+    assert.equal(await page.locator(`[data-client-panel="${view}"]`).isVisible(), true);
+    const sizes = await page.evaluate(() => ({ document: document.documentElement.scrollWidth, viewport: innerWidth }));
+    assert.ok(sizes.document <= sizes.viewport + 1, JSON.stringify({ view, ...sizes }));
+  }
+  assert.ok(requests.every(req => req.method === 'GET'));
   assert.deepEqual(errors, []);
 });

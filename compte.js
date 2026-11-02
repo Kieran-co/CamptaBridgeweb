@@ -66,6 +66,7 @@ function showAuthView(id) {
 }
 
 function saveSession(data) {
+  serverInvoices = null; currentBilling = null;
   document.querySelector('#synced-journal-list')?.replaceChildren();
   const syncStatus = document.querySelector('#synced-journal-status');
   if (syncStatus) syncStatus.textContent = '';
@@ -95,6 +96,7 @@ function redirectForRole(role) {
 }
 
 function clearSession() {
+  serverInvoices = null; currentBilling = null;
   document.querySelector('#synced-journal-list')?.replaceChildren();
   const syncStatus = document.querySelector('#synced-journal-status');
   if (syncStatus) syncStatus.textContent = '';
@@ -107,6 +109,10 @@ function clearSession() {
     localStorage.removeItem(invoiceStoragePrefix + account);
     sessionStorage.removeItem(invoiceStoragePrefix + account);
   }
+  document.querySelector('#profile-form')?.reset();
+  if (document.querySelector('#profile-form')) document.querySelector('#profile-form').hidden = true;
+  renderProfile({});
+  invoiceList?.replaceChildren();
   window.dispatchEvent(new Event("comptabridge:session-changed"));
 }
 
@@ -132,7 +138,7 @@ function saveProfile(profile) {
 
 function renderProfile(profile) {
   const fullName = [profile.first_name, profile.last_name].filter(Boolean).join(" ");
-  const greeting = profile.first_name || fullName || profile.email;
+  const greeting = profile.first_name || fullName || profile.email || '';
   document.querySelector("#account-name").textContent = greeting;
   document.querySelector("#summary-email").textContent = profile.email || "—";
   document.querySelector("#profile-name").textContent = fullName || "Profil à compléter";
@@ -174,6 +180,9 @@ function renderBillingStatus(billing) {
   const note = document.querySelector("#billing-note");
   const action = document.querySelector("#billing-action");
   if (!badge || !title || !message || !usage || !remaining || !overage || !reset || !note) return;
+  const metrics = document.querySelector('#billing-card .billing-metrics');
+  if (metrics) metrics.hidden = !['trial', 'trial_processing', 'active', 'free'].includes(status);
+  note.hidden = false;
   if (action) {
     action.hidden = true;
     action.disabled = false;
@@ -210,14 +219,14 @@ function renderBillingStatus(billing) {
     note.textContent = billing.launch_ends_at ? `Prix de lancement valable jusqu’au ${formatBillingDate(billing.launch_ends_at)}.` : "Les prix sont affichés hors taxes.";
   } else if (status === "free") {
     title.textContent = "Accès gratuit";
-    message.textContent = "Ce compte bénéficie d’un accès gratuit permanent à ComptaBridge.";
+    message.textContent = "Ce compte bénéficie d’un accès gratuit au service de conversion Factur-X.";
     usage.textContent = "Illimité";
     remaining.textContent = "Illimité";
     overage.textContent = "—";
     reset.textContent = "—";
-    note.textContent = "Aucun abonnement ni supplément ne sera appliqué à ce compte.";
+    note.textContent = "Aucun abonnement ni supplément de conversion ne sera appliqué à ce compte.";
   } else if (status === "payment_required" || status === "past_due" || status === "cancelled") {
-    title.textContent = "Abonnement nécessaire";
+    title.textContent = "Votre accès au service de conversion";
     message.textContent = status === "past_due"
       ? "Le dernier paiement n’a pas abouti. Régularisez votre abonnement pour déposer de nouvelles factures."
       : status === "cancelled"
@@ -273,23 +282,38 @@ async function startIndividualBillingCheckout() {
 async function loadBillingStatus() {
   const token = sessionValue(keys.token);
   if (!token) return;
+  const refresh = document.querySelector('#refresh-billing-status');
+  if (refresh) refresh.disabled = true;
   try {
     const billing = await request("auth/billing/status", { headers: { Authorization: `Bearer ${token}` } });
+    if (token !== sessionValue(keys.token)) return;
     currentBilling = billing;
     renderBillingStatus(billing);
+    window.ComptaBridgeWorkspace?.product('web', billing, token);
   } catch (error) {
+    if (token !== sessionValue(keys.token)) return;
+    currentBilling = null;
+    window.ComptaBridgeWorkspace?.product('web', null, token);
     const message = document.querySelector("#billing-message");
-    if (message) message.textContent = "Le statut de l’offre sera disponible dès que le compte sera synchronisé.";
-  }
+    if (message) message.textContent = 'Votre accès aux conversions ne peut pas être confirmé. Réessayez avec le bouton « Actualiser mon accès aux conversions ».';
+    document.querySelector('#billing-title').textContent = 'Statut indisponible';
+    const badge = document.querySelector('#billing-status-badge');
+    badge.textContent = 'À vérifier'; badge.className = 'status-badge status-badge-muted';
+    document.querySelector('#billing-card .billing-metrics').hidden = true;
+    document.querySelector('#billing-note').hidden = true;
+    document.querySelector('#billing-action').hidden = true;
+  } finally { if (refresh && token === sessionValue(keys.token)) refresh.disabled = false; }
 }
 
 async function loadProfile() {
   const token = sessionValue(keys.token);
   try {
     const profile = await request("auth/profile", { headers: { Authorization: `Bearer ${token}` } });
+    if (token !== sessionValue(keys.token)) return;
     saveProfile(profile);
     if (redirectForRole(profile.role)) return;
   } catch (error) {
+    if (token !== sessionValue(keys.token)) return;
     if (error.status === 401) {
       clearSession();
       dashboard.hidden = true;
@@ -506,6 +530,7 @@ async function loadInvoices() {
   if (!token || !invoiceList) return;
   try {
     const data = await request("portal/documents", { headers: { Authorization: `Bearer ${token}` } });
+    if (token !== sessionValue(keys.token)) return;
     serverInvoices = Array.isArray(data.documents) ? data.documents : [];
     const clearButton = document.querySelector("#clear-invoices-button");
     if (clearButton) {
@@ -514,6 +539,7 @@ async function loadInvoices() {
     }
     renderInvoices();
   } catch {
+    if (token !== sessionValue(keys.token)) return;
     serverInvoices = null;
     const clearButton = document.querySelector("#clear-invoices-button");
     if (clearButton) {
@@ -686,6 +712,7 @@ document.querySelector("#clear-invoices-button")?.addEventListener("click", () =
 });
 
 document.querySelector("#billing-action")?.addEventListener("click", startIndividualBillingCheckout);
+document.querySelector('#refresh-billing-status')?.addEventListener('click', loadBillingStatus);
 
 document.querySelector("#login-form").addEventListener("submit", async (event) => {
   event.preventDefault();
