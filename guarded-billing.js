@@ -21,7 +21,7 @@
     root.replaceChildren(); root.hidden = !current;
     if (!current) return;
     loading = true;
-    root.append(node('h2', 'Mes souscriptions et factures'));
+    root.append(node('h2', window.ComptaBridgeWorkspace ? 'Paiements et factures d’abonnement' : 'Mes souscriptions et factures'));
     const status = node('p'); status.setAttribute('role', 'status'); root.append(status);
     try {
       const data = await request('', current);
@@ -34,11 +34,12 @@
         purchases = [result, ...purchases.filter(item => item.purchase_id !== ident)];
       }
       if (version !== generation || token() !== current) return;
+      window.ComptaBridgeWorkspace?.purchases(purchases, current);
       if (!purchases.length) { root.hidden = true; return; }
       for (const purchase of purchases) {
         if (!/^[a-f0-9]{48}$/.test(purchase.purchase_id)) continue;
         const section = node('article'); section.className = 'guarded-purchase';
-        section.append(node('h3', purchase.product === 'software' ? 'Logiciel Facturation' : `Service web${purchase.scope_name ? ' — ' + purchase.scope_name : ''}`));
+        section.append(node('h3', purchase.product === 'software' ? 'Logiciel Facturation' : `${window.ComptaBridgeWorkspace ? 'Conversion Factur-X' : 'Service web'}${purchase.scope_name ? ' — ' + purchase.scope_name : ''}`));
         const message = node('p', purchase.error || (purchase.stage === 'active' ? 'Abonnement actif.' : ['preparing','setup','subscribing'].includes(purchase.stage) ? 'La vérification de votre carte et de votre facturation est en attente. Aucun paiement n’est confirmé.' : 'Votre souscription attend la confirmation de son paiement.'));
         message.setAttribute('role', 'status'); section.append(message);
         if (purchase.checkout_url && ['awaiting_payment', 'payment_required'].includes(purchase.stage)) {

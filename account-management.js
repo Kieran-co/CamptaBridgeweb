@@ -3,6 +3,7 @@
   'use strict';
   const root = document.querySelector('[data-account-management]');
   if (!root) return;
+  const closureRoot = document.querySelector('[data-account-closure]') || root;
   const API = 'https://api.comptabridge.fr/api/v1';
   const tokenKey = 'comptabridge_account_token';
   let generation = 0;
@@ -29,6 +30,7 @@
   function setBusy(value) {
     busy = value;
     root.querySelectorAll('button, input').forEach(node => { node.disabled = value; });
+    if (closureRoot !== root) closureRoot.querySelectorAll('button, input').forEach(node => { node.disabled = value; });
   }
   function clearClosedSession() {
     const email = (sessionStorage.getItem('comptabridge_account_email') || '').toLowerCase();
@@ -47,10 +49,12 @@
     const version = ++generation;
     busy = false;
     root.replaceChildren();
+    if (closureRoot !== root) closureRoot.replaceChildren();
     root.hidden = !current;
+    if (closureRoot !== root) closureRoot.hidden = true;
     if (!current) return;
-    root.append(element('h2', 'Abonnements et compte'));
-    root.append(element('p', 'La résiliation arrête le renouvellement en fin de période payée. La suppression ferme immédiatement votre compte commun au site et au logiciel.'));
+    root.append(element('h2', closureRoot === root ? 'Abonnements et compte' : 'Mes abonnements'));
+    root.append(element('p', closureRoot === root ? 'La résiliation arrête le renouvellement en fin de période payée. La suppression ferme immédiatement votre compte commun au site et au logiciel.' : 'La résiliation arrête le renouvellement du seul abonnement choisi en fin de période payée.'));
     const status = element('p', '', 'form-status');
     status.setAttribute('role', 'status');
     root.append(status);
@@ -69,7 +73,7 @@
     if (!rows.length) subscriptions.append(element('p', 'Aucun abonnement rattaché à ce compte.'));
     for (const subscription of rows) {
       const row = element('div', '', 'account-subscription');
-      const product = subscription.product === 'software' ? 'Licence logicielle' : 'Service web';
+      const product = closureRoot === root ? (subscription.product === 'software' ? 'Licence logicielle' : 'Service web') : (subscription.product === 'software' ? 'Logiciel Facturation' : 'Conversion Factur-X');
       const label = subscription.scope_name ? `${product} — ${subscription.scope_name}` : product;
       const ended = ['canceled', 'cancelled', 'inactive', 'incomplete_expired', 'revoked'].includes(subscription.status);
       const end = Number(subscription.period_end);
@@ -133,7 +137,7 @@
         if (version === generation && token() === current) { failure.textContent = error.message; setBusy(false); }
       }
     });
-    details.append(form); root.append(details);
+    details.append(form); closureRoot.append(details); closureRoot.hidden = false;
   }
   window.addEventListener('comptabridge:session-changed', refresh);
   window.addEventListener('pageshow', () => { if (!busy) refresh(); });

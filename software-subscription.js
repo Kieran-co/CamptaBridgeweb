@@ -17,21 +17,32 @@
       headers: { Authorization: `Bearer ${expected}`, 'Content-Type': 'application/json' } });
     const data = await response.json().catch(() => ({}));
     if (token() !== expected) throw new Error('La session a changé. Reconnectez-vous.');
-    if (!response.ok) throw new Error(typeof data.detail === 'string' ? data.detail : 'Le paiement ne peut pas être préparé.');
+    if (!response.ok) throw new Error(typeof data.detail === 'string' ? data.detail : path === 'status' ? 'Le statut de l’abonnement logiciel est indisponible. Réessayez.' : 'Le paiement ne peut pas être préparé.');
     return data;
   }
   async function refresh() {
     const current = token(), generation = ++version;
     pending = false; root.replaceChildren(); root.hidden = !current;
     if (!current) return;
-    root.append(node('h2', 'Mon logiciel de facturation'));
-    root.append(node('p', '9,99 € HT/mois · Une entreprise émettrice · Clients et documents illimités · Tous vos appareils. La TVA applicable est calculée au paiement.'));
-    root.append(node('p', 'Souscription réservée aux adresses de facturation en France, outre-mer compris.'));
+    root.append(node('h2', window.ComptaBridgeWorkspace ? 'Votre abonnement logiciel' : 'Mon logiciel de facturation'));
+    const offer = node('p', '9,99 € HT/mois · Une entreprise émettrice · Clients et documents illimités · Tous vos appareils. La TVA applicable est calculée au paiement.');
+    const region = node('p', 'Souscription réservée aux adresses de facturation en France, outre-mer compris.');
+    root.append(offer, region);
     const status = node('p'); status.className = 'form-status'; status.setAttribute('role', 'status'); root.append(status);
     let data;
     try { data = await request('status', {}, current); }
-    catch (error) { if (generation === version && token() === current) status.textContent = error.message; return; }
+    catch (error) {
+      if (generation === version && token() === current) {
+        status.textContent = error.message;
+        window.ComptaBridgeWorkspace?.product('software', null, current);
+        const retry = node('button', 'Réessayer'); retry.type = 'button'; retry.className = 'button button-ghost';
+        retry.addEventListener('click', refresh); root.append(retry);
+      }
+      return;
+    }
     if (generation !== version || token() !== current) return;
+    window.ComptaBridgeWorkspace?.product('software', data, current);
+    offer.hidden = region.hidden = Boolean(window.ComptaBridgeWorkspace && data.status === 'active');
     const labels = { active: 'Votre abonnement logiciel est actif.', past_due: 'Un paiement reste à régulariser.',
       pending: 'Votre achat attend une confirmation de paiement.', trialing: 'Votre licence attend un paiement confirmé.',
       incomplete: 'Votre paiement attend une confirmation.', canceled: 'Votre abonnement logiciel est arrêté.',
@@ -40,7 +51,7 @@
     if (data.status === 'active') {
       const end = Number(data.paid_until);
       if (end > 0 && Number.isFinite(end)) root.append(node('p', `Période payée jusqu’au ${new Date(end * 1000).toLocaleDateString('fr-FR')}.`));
-      root.append(node('p', 'Dans le logiciel, connectez-vous avec ce même compte pour retrouver votre licence sur vos appareils. Vous pouvez résilier depuis « Abonnements et compte ».'));
+      root.append(node('p', `Dans le logiciel, connectez-vous avec ce même compte pour retrouver votre licence sur vos appareils. Vous pouvez résilier depuis « ${window.ComptaBridgeWorkspace ? 'Abonnements et paiements' : 'Abonnements et compte'} ».`));
     }
     if (['none', 'pending', 'incomplete', 'canceled', 'incomplete_expired'].includes(data.status)) {
       if (data.sales_enabled !== true) { root.append(node('p', 'La souscription au logiciel n’est pas encore ouverte.')); }
