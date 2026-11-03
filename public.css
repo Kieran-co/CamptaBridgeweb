@@ -39,6 +39,17 @@ body.marketing { --ink:#f3f7fb; --muted:#a4b8cc; --paper:#07111d; --line:#28445e
 .site-lead { max-width:570px; font-size:18px; line-height:1.75; color:var(--muted); margin:0; }
 .site-small { font-size:12px; line-height:1.7; color:var(--muted); }
 .site-hero-note { margin-top:20px; max-width:490px; }
+.site-roadmap-link { display:inline-block; margin-top:8px; color:#90c8ed; font-size:12px; }
+.platform-current { display:flex; align-items:center; justify-content:space-between; gap:24px; padding:23px 26px; border:1px solid #33617d; border-radius:10px; background:#102b43; margin-bottom:20px; }
+.platform-current strong { display:block; color:#f3f7fb; font-size:19px; }
+.platform-current span { display:block; color:var(--muted); font-size:13px; }
+.platform-current a { flex-shrink:0; }
+.platform-grid { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:18px; }
+.platform-card { min-width:0; padding:25px; border:1px solid var(--line); border-radius:10px; background:#102235; }
+.platform-badge { display:inline-block; padding:4px 9px; color:#c6d9e9; border:1px solid #42617e; border-radius:999px; font-size:11px; }
+.platform-card h3 { margin:20px 0 10px; font-size:25px; }
+.platform-card p { margin:0; color:var(--muted); font-size:13px; }
+.platform-note { margin-top:20px; }
 .site-hero-visual { min-width:0; position:relative; padding:24px 0 30px 10px; }
 .site-hero-visual::before { content:""; position:absolute; inset:0 -24px 5px 35px; background:#0d2b43; border-radius:38% 15% 20% 15%; z-index:-1; }
 .product-window { overflow:hidden; border:1px solid #315774; border-radius:12px; box-shadow:0 20px 50px #00000040; background:#0b2030; }
@@ -208,6 +219,8 @@ body.marketing { --ink:#f3f7fb; --muted:#a4b8cc; --paper:#07111d; --line:#28445e
   .site-split { gap:40px; }
 }
 @media (max-width:820px) {
+  .platform-grid { grid-template-columns:repeat(2,minmax(0,1fr)); }
+  .platform-current { align-items:start; flex-direction:column; gap:12px; }
   .site-width { width:calc(100% - 40px); }
   .site-header-inner { min-height:78px; flex-wrap:wrap; gap:0; }
   .site-brand { font-size:21px; }

@@ -23,8 +23,15 @@ commune ; seul le nom de la rubrique client est actualisé dans les CGV.
 Les prix et les droits contractuels ne sont pas modifiés par cette refonte.
 Les mises à jour et versions majeures, déjà incluses dans l’offre pendant
 l’abonnement actif, ont une section dédiée sur la page du logiciel et figurent
-explicitement dans la comparaison des tarifs. Aucune feuille de route, date
-de livraison ou nouvelle fonctionnalité non confirmée n’est annoncée.
+explicitement dans la comparaison des tarifs. Les éditions Android pour téléphones/tablettes, iOS pour iPhone, iPadOS pour
+iPad et macOS pour Mac, confirmées par le titulaire comme prévues, figurent
+dans une feuille de route distincte de Windows 11 testé. Aucune date de sortie
+ou disponibilité actuelle de ces éditions n’est annoncée.
+Le titulaire confirme que ces éditions seront comprises dans le même abonnement
+logiciel actif à 9,99 € HT/mois pour ses appareils et une entreprise émettrice.
+Cette inclusion à leur sortie est reflétée dans le logiciel, les tarifs, l’aide
+et les textes contractuels, sans promettre une synchronisation de fichiers
+complète ou un calendrier qui n’ont pas été confirmés.
 Les aperçus de partage utilisent la capture actuelle de la facturation ; l’ancien
 visuel de conversion bancaire OFX n’est plus référencé par les pages refaites.
 
