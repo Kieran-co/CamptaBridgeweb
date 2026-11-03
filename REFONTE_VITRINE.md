@@ -15,8 +15,9 @@ présente maintenant les deux usages dès l’accueil et répartit les détails 
 | `telecharger.html` | Vérifier la version réellement disponible et préparer l’installation. |
 | `aide.html` | Démarrer, retrouver son compte et consulter la FAQ ou le support. |
 
-La direction visuelle associe un fond clair, le vert du produit et le bleu de la
-marque. Les styles et scripts publics sont séparés de ceux des espaces client,
+La direction visuelle conserve le fond bleu nuit d’origine, le vert du produit
+et le bleu de la marque. Le logo original est affiché intégralement, sans cadre
+qui le découpe, dans l’en-tête et le pied de page. Les styles et scripts publics sont séparés de ceux des espaces client,
 partenaire et administrateur. Les cinq pages légales reprennent la navigation
 commune ; seul le nom de la rubrique client est actualisé dans les CGV.
 Les prix et les droits contractuels ne sont pas modifiés par cette refonte.
