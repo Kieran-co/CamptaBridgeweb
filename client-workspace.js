@@ -102,7 +102,7 @@
   window.addEventListener('comptabridge:session-changed', () => {
     current = token(); states = { software: null, web: null }; purchases = [];
     if (!current) root.hidden = true;
-    navigate('overview'); render();
+    navigate(current ? locationView() : 'overview'); render();
   });
   navigate(locationView()); render();
 })();

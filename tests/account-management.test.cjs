@@ -44,6 +44,7 @@ async function open(t, options = {}) {
     requests.push({ endpoint, method: req.method(), body: req.postDataJSON(), authorization: req.headers().authorization });
     let data = { documents: [], clients: [], accounts: [], requests: [], events: [] }, status = 200;
     if (endpoint === 'auth/profile') data = { email: 'fixture@example.com', first_name: 'Recette', last_name: 'Fictive', company_name: 'Démo', role: options.role || 'client' };
+    if (endpoint === 'auth/login') data = { access_token: 'fixture-token', email: 'fixture@example.com', first_name: 'Recette', last_name: 'Fictive', company_name: 'Démo', role: 'client' };
     if (endpoint === 'auth/billing/status') {
       if (options.waitWebBilling) await options.waitWebBilling;
       data = options.webBilling || { status: 'active', used: 0, included: 25, remaining: 25 };
@@ -588,6 +589,18 @@ test('espace : retour de paiement ouvre les abonnements sans activation locale',
   await page.goBack();
   assert.equal(await page.locator('[data-client-panel="software"]').isVisible(), true);
   assert.equal(requests.filter(req => req.endpoint === 'software/checkout').length, 0);
+});
+
+test('vitrine : le choix du logiciel est conservé après connexion', async t => {
+  const { page, requests, errors } = await open(t, { anonymous: true, page: 'compte.html#logiciel', software: activeSoftware });
+  await page.locator('#login-email').fill('fixture@example.com');
+  await page.locator('#login-password').fill('MotDePasseFictif123!');
+  await page.locator('#login-form').getByRole('button', { name: /Se connecter/ }).click();
+  await page.locator('[data-software-subscription]').getByText('Votre abonnement logiciel est actif.').waitFor();
+  assert.equal(await page.locator('[data-client-panel="software"]').isVisible(), true);
+  assert.equal(await page.locator('[data-client-panel="overview"]').isHidden(), true);
+  assert.equal(requests.filter(req => req.endpoint === 'software/checkout').length, 0);
+  assert.deepEqual(errors, []);
 });
 
 test('espace : navigation mobile, cinq rubriques sans débordement', async t => {
