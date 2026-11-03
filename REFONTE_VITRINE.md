@@ -21,6 +21,10 @@ qui le découpe, dans l’en-tête et le pied de page. Les styles et scripts pub
 partenaire et administrateur. Les cinq pages légales reprennent la navigation
 commune ; seul le nom de la rubrique client est actualisé dans les CGV.
 Les prix et les droits contractuels ne sont pas modifiés par cette refonte.
+Les mises à jour et versions majeures, déjà incluses dans l’offre pendant
+l’abonnement actif, ont une section dédiée sur la page du logiciel et figurent
+explicitement dans la comparaison des tarifs. Aucune feuille de route, date
+de livraison ou nouvelle fonctionnalité non confirmée n’est annoncée.
 Les aperçus de partage utilisent la capture actuelle de la facturation ; l’ancien
 visuel de conversion bancaire OFX n’est plus référencé par les pages refaites.
 
