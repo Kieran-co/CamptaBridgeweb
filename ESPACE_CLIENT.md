@@ -85,11 +85,11 @@ Après commit des fichiers revus :
 python3 scripts/package_client_workspace.py
 ```
 
-L'archive `.build/ComptaBridge-espace-client.zip` contient uniquement les sept
-fichiers publics modifiés, un manifeste SHA-256 lié au commit et la procédure
+L'archive `.build/ComptaBridge-espace-client.zip` contient uniquement les onze
+fichiers publics de l’espace client et des accès au compte, un manifeste SHA-256 lié au commit et la procédure
 de transfert/restauration. Le paquet refuse de présenter des fichiers publics
 non commités comme issus de ce commit. Il complète le site existant basé sur
-`61ef92d12edfe242f159e3f3c576a81abb305e19` ; il ne remplace pas le site entier.
+la vitrine de `codex/website-launch-redesign` ; il ne remplace pas le site entier.
 
 La publication OVH reste manuelle, après revue et sauvegarde. Aucun changement
 d'API, PHP, Stripe, prix ou ouverture des ventes n'est nécessaire à la refonte.

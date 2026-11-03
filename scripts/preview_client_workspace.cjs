@@ -57,8 +57,9 @@ function fixtures() {
 }
 let html = read('compte.html');
 html = html.replace('<title>Espace client — ComptaBridge</title>', '<title>Aperçu fictif — Espace client ComptaBridge</title>');
+html = html.replace(/<link rel="canonical"[^>]*>/g, '');
 html = html.replace(/<link rel="stylesheet" href="([^"?]+)(?:\?[^"]*)?">/g, (_, name) => `<style>${read(name)}</style>`);
-html = html.replace(/<script src="([^"?]+)(?:\?[^"]*)?"><\/script>/g, (_, name) => `<script>${inline(read(name))}</script>`);
+html = html.replace(/<script src="([^"?]+)(?:\?[^"]*)?"( defer)?><\/script>/g, (_, name, deferred) => `<script>${deferred ? `document.addEventListener('DOMContentLoaded', () => {${inline(read(name))}\n});` : inline(read(name))}</script>`);
 const logo = readFileSync(path.join(root, 'assets/comptabridge-logo.png')).toString('base64');
 html = html.replaceAll('src="assets/comptabridge-logo.png"', `src="data:image/png;base64,${logo}"`);
 html = html.replace('</head>', `<script>${inline(`(${fixtures.toString()})();`)}</script></head>`);

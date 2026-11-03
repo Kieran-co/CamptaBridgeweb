@@ -1,9 +1,14 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url><loc>https://comptabridge.fr/</loc></url>
+  <url><loc>https://comptabridge.fr/logiciel.html</loc></url>
+  <url><loc>https://comptabridge.fr/conversion.html</loc></url>
+  <url><loc>https://comptabridge.fr/tarifs.html</loc></url>
+  <url><loc>https://comptabridge.fr/aide.html</loc></url>
   <url><loc>https://comptabridge.fr/telecharger.html</loc></url>
-  <url><loc>https://comptabridge.fr/legal/mentions-legales.html</loc></url>
-  <url><loc>https://comptabridge.fr/legal/confidentialite.html</loc></url>
   <url><loc>https://comptabridge.fr/legal/cgv.html</loc></url>
+  <url><loc>https://comptabridge.fr/legal/confidentialite.html</loc></url>
+  <url><loc>https://comptabridge.fr/legal/licence.html</loc></url>
+  <url><loc>https://comptabridge.fr/legal/mentions-legales.html</loc></url>
   <url><loc>https://comptabridge.fr/legal/remboursements.html</loc></url>
 </urlset>

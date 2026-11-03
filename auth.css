@@ -1,0 +1,81 @@
+/* Access forms share the public website identity; dashboard controls keep their styles. */
+.client-workspace-page { background:#07111d; color:#f3f7fb; --line:#28445e; font-family:"Aptos","Segoe UI",system-ui,sans-serif; }
+.client-workspace-page .site-header { position:relative; }
+.client-workspace-page .site-brand img { object-fit:contain; }
+.client-workspace-page .site-menu-toggle { color:#f3f7fb; }
+.client-workspace-page .skip-link { position:absolute; top:8px; left:16px; transform:translateY(-180%); padding:12px 18px; background:#102235; color:#fff; z-index:100; }
+.client-workspace-page .skip-link:focus { transform:none; }
+.client-workspace-page .auth-layout { width:min(1200px,100%); margin:32px auto 48px; grid-template-columns:minmax(0,1fr) minmax(0,.92fr); align-items:start; gap:85px; min-height:0; }
+.client-workspace-page .auth-showcase { padding:30px 0; min-width:0; text-align:left; }
+.client-workspace-page .auth-showcase > .access-eyebrow { display:flex; align-items:center; gap:10px; margin:0 0 22px; color:#9eb8cf; font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:.13em; }
+.access-eyebrow > span { width:7px; height:7px; border-radius:50%; background:#31d06f; flex-shrink:0; }
+.client-workspace-page .auth-showcase h1 { margin:0 0 25px; font-size:clamp(42px,4.7vw,64px); line-height:1.12; letter-spacing:-.045em; font-weight:650; }
+.client-workspace-page .auth-showcase h1 em { color:#69ddae; }
+.client-workspace-page .auth-showcase > p:not(.access-eyebrow):not(.access-help) { max-width:490px; margin:0; color:#a4b8cc; font-size:17px; line-height:1.8; }
+.access-services { display:grid; gap:23px; list-style:none; padding:0; margin:36px 0; }
+.access-services li { display:flex; align-items:start; gap:15px; }
+.access-service-icon { display:grid; place-items:center; width:42px; height:42px; flex-shrink:0; border:1px solid #315674; background:#102b43; border-radius:10px; font-size:15px; font-weight:700; color:#8bdac3; }
+.access-services strong { display:block; font-size:14px; font-weight:650; }
+.access-services p { margin:4px 0 0; font-size:13px; line-height:1.6; color:#9bb3c8; }
+.client-workspace-page .auth-showcase > .access-help { padding-top:24px; border-top:1px solid #28445e; color:#9bb3c8; font-size:13px; line-height:1.8; }
+.access-help a { color:#9bccf5; text-decoration:underline; text-underline-offset:4px; }
+.client-workspace-page .auth-panel { padding:34px; border:1px solid #31516c; border-radius:14px; background:#102235; box-shadow:0 18px 40px #00000024; overflow:visible; min-width:0; }
+.client-workspace-page .auth-panel::before { display:none; }
+.access-noscript { padding:16px; border:1px solid #42617e; color:#c1d5e5; font-size:13px; line-height:1.7; border-radius:8px; }
+.client-workspace-page .auth-kicker { color:#8ddfc0; font-size:10px; font-weight:700; letter-spacing:.12em; margin-bottom:15px; }
+.client-workspace-page .auth-view h2 { font-size:32px; font-weight:650; line-height:1.15; letter-spacing:-.035em; margin:0 0 15px; }
+.client-workspace-page .auth-view h2:focus { outline:none; }
+.client-workspace-page .auth-view > p { color:#a4b8cc; font-size:14px; line-height:1.75; margin:0 0 24px; }
+.client-workspace-page .auth-panel .account-form { margin-top:25px; gap:9px; }
+.client-workspace-page .auth-panel .account-form label { color:#dce7f3; font-size:13px; font-weight:600; }
+.client-workspace-page .auth-panel .account-form input, .client-workspace-page .auth-panel .account-form select { min-width:0; width:100%; box-sizing:border-box; min-height:48px; margin:0 0 10px; padding:12px 14px; border:1px solid #385773; border-radius:8px; background:#091a2a; color:#f3f7fb; font:inherit; font-size:14px; }
+.client-workspace-page .auth-panel .account-form input::placeholder { color:#839db3; opacity:1; }
+.client-workspace-page .auth-panel .account-form input:focus, .client-workspace-page .auth-panel .account-form select:focus { border-color:#80c2ff; outline:2px solid #80c2ff; outline-offset:2px; box-shadow:none; }
+.access-password { position:relative; margin-bottom:10px; min-width:0; }
+.client-workspace-page .auth-panel .access-password input { padding-right:86px; margin-bottom:0; }
+.access-password-toggle { position:absolute; top:4px; right:4px; bottom:4px; min-width:70px; border:0; border-radius:5px; background:transparent; color:#a7d0f2; font-size:11px; font-weight:650; padding:6px 9px; }
+.access-password-toggle:hover { background:#15354d; color:#fff; }
+.client-workspace-page .auth-panel .password-help { margin:0 0 8px; color:#9bb3c8; font-size:11px; line-height:1.65; }
+.client-workspace-page .auth-panel .password-help.valid { color:#8ddfc0; }
+.client-workspace-page .auth-panel .form-status { color:#9fe4c3; font-size:12px; line-height:1.6; min-height:0; margin:0; overflow-wrap:anywhere; }
+.client-workspace-page .auth-panel .form-status:not(:empty) { padding:12px 0; }
+.client-workspace-page .auth-panel .form-status.error { color:#ffb8b8; }
+.client-workspace-page .auth-panel .button { min-height:49px; font-size:14px; font-weight:700; border-radius:8px; padding:12px 18px; box-shadow:none; transform:none; }
+.client-workspace-page .auth-panel .auth-primary { margin-top:8px; background:#1765cf; border:1px solid #1765cf; color:#fff; }
+.client-workspace-page .auth-panel .auth-primary:hover { background:#1054b0; }
+.client-workspace-page .auth-panel .auth-secondary { border:1px solid #42617e; background:transparent; color:#eef5fc; }
+.client-workspace-page .auth-panel .auth-secondary:hover { background:#173247; }
+.client-workspace-page .auth-panel .text-button { font-size:12px; color:#a4d0f5; margin-top:11px; }
+.client-workspace-page .auth-separator { margin:22px 0 18px; color:#91a9bd; font-size:11px; }
+.client-workspace-page .auth-separator::before, .client-workspace-page .auth-separator::after { background:#31516c; }
+.client-workspace-page .auth-back { min-height:35px; margin:0 0 21px; padding:0; font-size:12px; color:#a4d0f5; }
+.client-workspace-page .auth-panel .terms-consent { margin:4px 0 8px; color:#a4b8cc !important; font-size:11px !important; line-height:1.7; }
+.client-workspace-page .auth-panel .terms-consent input[type="checkbox"] { width:18px; min-width:18px; height:18px; min-height:18px; margin:3px 0 0; padding:0; accent-color:#1765cf; }
+.client-workspace-page .auth-panel .terms-consent a { color:#a4d0f5; text-decoration:underline; text-underline-offset:3px; }
+.client-workspace-page .auth-panel button:focus-visible, .client-workspace-page .auth-back:focus-visible, .client-workspace-page .auth-panel a:focus-visible { outline:3px solid #80c2ff; outline-offset:3px; }
+.client-workspace-page .access-footer { width:min(1200px,calc(100% - 80px)); display:flex; align-items:center; justify-content:space-between; gap:25px; margin:0 auto; padding:25px 0 35px; border-color:#28445e; }
+.client-workspace-page .access-footer > img { width:125px; height:auto; object-fit:contain; flex-shrink:0; }
+.client-workspace-page .access-footer p { margin:0; color:#91a9bd; font-size:11px; }
+.client-workspace-page .access-footer p:last-child { display:flex; gap:9px; flex-wrap:wrap; }
+.client-workspace-page .access-footer a { color:#a8c1d6; }
+@media (max-width:1000px) {
+  .client-workspace-page .auth-layout { gap:40px; }
+  .client-workspace-page .auth-panel { padding:28px; }
+  .client-workspace-page .auth-view h2 { font-size:29px; }
+  .client-workspace-page .access-footer { width:calc(100% - 48px); }
+}
+@media (max-width:760px) {
+  .client-workspace-page .auth-layout { display:flex; flex-direction:column; gap:28px; margin-block:20px 38px; }
+  .client-workspace-page .auth-panel { width:100%; order:-1; padding:27px; }
+  .client-workspace-page .auth-showcase { width:100%; padding:10px 0 0; }
+  .client-workspace-page .auth-showcase h1 { font-size:38px; }
+  .client-workspace-page .auth-showcase > p:not(.access-eyebrow):not(.access-help) { font-size:15px; }
+  .access-services { gap:18px; margin-block:25px; }
+  .client-workspace-page .auth-view h2 { font-size:29px; }
+  .client-workspace-page .access-footer { width:calc(100% - 36px); flex-wrap:wrap; gap:12px 20px; }
+  .client-workspace-page .access-footer > p:first-of-type { flex:1; min-width:150px; }
+}
+@media (max-width:380px) {
+  .client-workspace-page .auth-panel { padding:22px; }
+  .client-workspace-page .auth-panel .form-columns { grid-template-columns:minmax(0,1fr); }
+}
