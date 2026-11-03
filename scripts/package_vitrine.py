@@ -7,6 +7,7 @@ from zipfile import ZIP_DEFLATED, ZipFile
 ROOT = Path(__file__).resolve().parents[1]
 PUBLIC_FILES = (
     'public.css', 'public.js', 'assets/facturation-tableau-de-bord.png',
+    'auth.css', 'auth-ui.js', 'compte.js',
     'client-workspace.js', 'compte.html',
     'logiciel.html', 'conversion.html', 'tarifs.html', 'aide.html',
     'telecharger.html', 'legal/mentions-legales.html',
@@ -28,7 +29,7 @@ def package():
     output.parent.mkdir(exist_ok=True)
     instructions = '''COMPTABRIDGE — REFONTE DE LA VITRINE
 
-Le dossier site/ contient les 17 fichiers publics de cette mise à jour.
+Le dossier site/ contient les 20 fichiers publics de cette mise à jour.
 Le site existant doit déjà disposer des autres fichiers, dont le logo,
 styles.css, legal/legal.css, windows-download.js et l’espace client refait.
 L’archive complète le site basé sur aa7d363 (codex/client-workspace).
@@ -44,10 +45,12 @@ TRANSFERT MANUEL APRES VALIDATION
 3. Transférez le CONTENU de site/ dans le dossier contenant déjà index.html
    (souvent www/), en conservant assets/ et legal/ et tous les autres fichiers.
    Ne créez pas un dossier site/ sur OVH.
-4. Envoyez d’abord public.css, public.js, client-workspace.js et l’image dans assets/, puis les pages
+4. Envoyez d’abord public.css, public.js, auth.css, auth-ui.js, compte.js,
+   client-workspace.js et l’image dans assets/, puis les pages
    logiciel/conversion/tarifs/aide/téléchargement et legal/, puis sitemap.xml.
    Remplacez compte.html pour actualiser le script de navigation, puis index.html
-   en dernier. Le choix du logiciel est ainsi conservé après connexion.
+   en dernier. Le choix du logiciel est ainsi conservé après connexion et les
+   formulaires de connexion/inscription/réinitialisation partagent son style.
 5. Rechargez sans cache et vérifiez accueil, menu mobile, offres, démonstration,
    tarifs, FAQ, téléchargement, pages légales et accès au compte. Vérifiez que
    « Choisir le logiciel » et le premier dépôt mènent aux bonnes rubriques.
@@ -56,7 +59,8 @@ TRANSFERT MANUEL APRES VALIDATION
    restauration des pages qui les utilisent.
 
 Cette archive conserve windows-release.json et .htaccess sur le serveur. Les
-deux fichiers client ajustent uniquement la destination après connexion.
+fichiers client harmonisent les accès au compte et conservent la destination
+après connexion. Le consentement est requis avant toute inscription.
 Aucun installateur, accès API,
 paramètre Stripe, ouverture de vente ou envoi d’e-mail n’y est inclus.
 Windows 11 64 bits a été testé par le titulaire ; les autres versions restent

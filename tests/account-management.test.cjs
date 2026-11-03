@@ -45,6 +45,7 @@ async function open(t, options = {}) {
     let data = { documents: [], clients: [], accounts: [], requests: [], events: [] }, status = 200;
     if (endpoint === 'auth/profile') data = { email: 'fixture@example.com', first_name: 'Recette', last_name: 'Fictive', company_name: 'Démo', role: options.role || 'client' };
     if (endpoint === 'auth/login') data = { access_token: 'fixture-token', email: 'fixture@example.com', first_name: 'Recette', last_name: 'Fictive', company_name: 'Démo', role: 'client' };
+    if (endpoint === 'auth/register') { status = 503; data = { detail: 'Création de compte simulée indisponible.' }; }
     if (endpoint === 'auth/billing/status') {
       if (options.waitWebBilling) await options.waitWebBilling;
       data = options.webBilling || { status: 'active', used: 0, included: 25, remaining: 25 };
@@ -601,6 +602,61 @@ test('vitrine : le choix du logiciel est conservé après connexion', async t =>
   assert.equal(await page.locator('[data-client-panel="overview"]').isHidden(), true);
   assert.equal(requests.filter(req => req.endpoint === 'software/checkout').length, 0);
   assert.deepEqual(errors, []);
+});
+
+for (const mobile of [false, true]) {
+  test(`connexion : les trois formulaires sont accessibles et lisibles ${mobile ? 'sur téléphone' : 'sur ordinateur'}`, async t => {
+    const { page, errors, requests } = await open(t, { anonymous: true, mobile });
+    await page.locator('#login-form').waitFor();
+    if (process.env.CB_PREVIEW_DIR) await preview(page, `connexion-${mobile ? '390' : '1280'}.png`);
+    await page.locator('#show-register').click();
+    await page.locator('#register-form').waitFor();
+    assert.equal(await page.locator('#register-view h2').evaluate(el => el === document.activeElement), true);
+    assert.equal(await page.locator('#register-terms').evaluate(el => el.form?.id), 'register-form');
+    if (process.env.CB_PREVIEW_DIR) await preview(page, `inscription-${mobile ? '390' : '1280'}.png`);
+    let dimensions = await page.evaluate(() => ({ viewport: innerWidth, width: document.documentElement.scrollWidth }));
+    assert.ok(dimensions.width <= dimensions.viewport + 1, JSON.stringify(dimensions));
+    await page.locator('#register-view [data-auth-view]').click();
+    await page.locator('#login-email').fill('fixture@example.com');
+    await page.locator('#show-reset').click();
+    assert.equal(await page.locator('#reset-email').inputValue(), 'fixture@example.com');
+    if (process.env.CB_PREVIEW_DIR) await preview(page, `reinitialisation-${mobile ? '390' : '1280'}.png`);
+    dimensions = await page.evaluate(() => ({ viewport: innerWidth, width: document.documentElement.scrollWidth }));
+    assert.ok(dimensions.width <= dimensions.viewport + 1, JSON.stringify(dimensions));
+    assert.deepEqual(requests, []); assert.deepEqual(errors, []);
+  });
+}
+test('connexion : afficher le mot de passe ne le transmet pas et les changements d’écran le masquent', async t => {
+  const { page, requests, errors } = await open(t, { anonymous: true });
+  const input = page.locator('#login-password');
+  await input.fill('MotDePasseFictif123!');
+  await page.locator('#login-view').getByRole('button', { name: 'Afficher le mot de passe', exact: true }).click();
+  assert.equal(await input.getAttribute('type'), 'text');
+  await page.locator('#show-reset').click();
+  assert.equal(await input.getAttribute('type'), 'password');
+  assert.deepEqual(requests, []);
+  await page.locator('#reset-view [data-auth-view]').click();
+  await page.locator('#login-email').fill('fixture@example.com');
+  await page.locator('#login-form').getByRole('button', { name: 'Se connecter', exact: true }).click();
+  await page.locator('#dashboard-view').waitFor();
+  assert.equal(await input.inputValue(), '');
+  assert.deepEqual(errors, []);
+});
+test('inscription : consentement obligatoire avant toute requête de création', async t => {
+  const { page, requests } = await open(t, { anonymous: true });
+  await page.locator('#show-register').click();
+  for (const [id, value] of Object.entries({ 'register-first-name': 'Camille', 'register-last-name': 'Démo', 'register-company-name': 'Entreprise Fictive', 'register-email': 'fixture@example.com', 'register-password': 'MotDePasseFictif123!', 'register-confirm': 'MotDePasseFictif123!' })) await page.locator('#' + id).fill(value);
+  await page.locator('#register-form').getByRole('button', { name: 'Créer mon espace', exact: true }).click();
+  assert.equal(requests.filter(req => req.endpoint === 'auth/register').length, 0);
+  // The JavaScript guard also applies when native validation is bypassed.
+  await page.locator('#register-form').dispatchEvent('submit');
+  await page.locator('#register-status').getByText(/Acceptez les conditions générales/).waitFor();
+  assert.equal(requests.filter(req => req.endpoint === 'auth/register').length, 0);
+  await page.locator('#register-terms').check();
+  await page.locator('#register-form').getByRole('button', { name: 'Créer mon espace', exact: true }).click();
+  await page.locator('#register-status').getByText('Création de compte simulée indisponible.', { exact: true }).waitFor();
+  assert.equal(requests.filter(req => req.endpoint === 'auth/register').length, 1);
+  assert.equal(await page.locator('#guest-view').isVisible(), true);
 });
 
 test('espace : navigation mobile, cinq rubriques sans débordement', async t => {

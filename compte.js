@@ -62,7 +62,9 @@ function escapeHtml(value) {
 }
 
 function showAuthView(id) {
+  const moveFocus = guestView.contains(document.activeElement);
   document.querySelectorAll(".auth-view").forEach((view) => { view.hidden = view.id !== id; });
+  if (moveFocus) document.querySelector(`#${id} h2`)?.focus();
 }
 
 function saveSession(data) {
@@ -744,6 +746,10 @@ document.querySelector("#register-form").addEventListener("submit", async (event
   }
   if (password !== document.querySelector("#register-confirm").value) {
     setStatus(status, "Les mots de passe ne correspondent pas.", true);
+    return;
+  }
+  if (!document.querySelector('#register-terms').checked) {
+    setStatus(status, 'Acceptez les conditions générales et confirmez la lecture de la politique de confidentialité avant de créer votre compte.', true);
     return;
   }
   setStatus(status, "Création de votre espace…");

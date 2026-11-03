@@ -5,7 +5,7 @@ const { readFile, mkdir } = require('node:fs/promises');
 const path = require('node:path');
 const { chromium } = require('playwright');
 let browser, server, origin;
-const pages = ['index.html', 'logiciel.html', 'conversion.html', 'tarifs.html', 'aide.html', 'telecharger.html', 'legal/mentions-legales.html', 'legal/confidentialite.html', 'legal/cgv.html', 'legal/licence.html', 'legal/remboursements.html'];
+const pages = ['index.html', 'logiciel.html', 'conversion.html', 'tarifs.html', 'aide.html', 'telecharger.html', 'compte.html', 'legal/mentions-legales.html', 'legal/confidentialite.html', 'legal/cgv.html', 'legal/licence.html', 'legal/remboursements.html'];
 before(async () => {
   const apache = await readFile('.htaccess', 'utf8');
   const policy = apache.match(/Header always set Content-Security-Policy "([^"]+)"/)[1];
@@ -40,16 +40,16 @@ async function open(t, options = {}) {
   return { page, outgoing, errors, missing };
 }
 for (const width of [390, 1440]) {
-  test(`vitrine : 11 pages, navigation et ressources sans débordement à ${width} px`, async t => {
+  test(`vitrine et connexion : ${pages.length} pages sans débordement à ${width} px`, async t => {
     const { page, outgoing, errors, missing } = await open(t, { width });
     for (const file of pages) {
       await page.goto(`${origin}/${file}`);
-      await page.locator('main h1').waitFor();
-      assert.equal(await page.locator('main h1').count(), 1, file);
+      await page.locator('main h1:visible').waitFor();
+      assert.equal(await page.locator('main h1:visible').count(), 1, file);
       const size = await page.evaluate(() => ({ visible: innerWidth, content: document.documentElement.scrollWidth }));
       assert.ok(size.content <= size.visible + 1, JSON.stringify({ file, ...size }));
       assert.ok(await page.locator('link[rel="canonical"]').getAttribute('href'), file);
-      if (!file.startsWith('legal/')) {
+      if (!file.startsWith('legal/') && file !== 'compte.html') {
         const socialImage = await page.locator('meta[property="og:image"]').getAttribute('content');
         assert.equal(socialImage, 'https://comptabridge.fr/assets/facturation-tableau-de-bord.png');
         assert.equal((await page.request.get(origin + new URL(socialImage).pathname)).status(), 200);

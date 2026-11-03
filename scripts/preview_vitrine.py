@@ -1,5 +1,6 @@
 """Build a self-contained, network-free review of the public redesign."""
 from base64 import b64encode
+import argparse
 import json
 from pathlib import Path
 import re
@@ -9,6 +10,7 @@ PAGES = {
     'index.html': 'Accueil', 'logiciel.html': 'Le logiciel',
     'conversion.html': 'Conversion Factur-X', 'tarifs.html': 'Tarifs',
     'aide.html': 'Aide', 'telecharger.html': 'Téléchargement Windows',
+    'compte.html': 'Connexion et inscription',
     'legal/mentions-legales.html': 'Mentions légales',
     'legal/confidentialite.html': 'Confidentialité', 'legal/cgv.html': 'CGV',
     'legal/licence.html': 'Licence', 'legal/remboursements.html': 'Résiliation',
@@ -19,7 +21,9 @@ def safe_json(value):
     return json.dumps(value, ensure_ascii=False).replace('<', '\\u003c')
 
 
-def build():
+def build(initial='index.html'):
+    if initial not in PAGES:
+        raise ValueError('Unknown preview page')
     pages, assets = {}, {}
     for name in PAGES:
         source = ROOT / name
@@ -34,7 +38,7 @@ def build():
         def script(match):
             scripts.append((source.parent / match[1]).read_text())
             return ''
-        html = re.sub(r'<script src="([^"?]+)(?:\?[^"]*)?" defer></script>', script, html)
+        html = re.sub(r'<script src="([^"?]+)(?:\?[^"]*)?"(?: defer)?></script>', script, html)
         def asset(match):
             resource = (source.parent / match[1]).resolve()
             key = resource.relative_to(ROOT).as_posix()
@@ -42,8 +46,21 @@ def build():
             return f'src="@@ASSET:{key}@@"'
         html = re.sub(r'src="([^"?]+\.png)"', asset, html)
         # All external links are intercepted in this sandboxed review frame.
-        bootstrap = '''window.fetch = async () => new Response(JSON.stringify({schema:1,status:'preparation',version:null,sha256:null,size:null}), {headers:{'Content-Type':'application/json'}});
+        bootstrap = '''for (const name of ['sessionStorage','localStorage']) {
+  const values = new Map();
+  Object.defineProperty(window,name,{value:{getItem:key=>values.get(String(key))??null,setItem:(key,value)=>values.set(String(key),String(value)),removeItem:key=>values.delete(String(key)),clear:()=>values.clear()}});
+}
+window.fetch = async (input, options={}) => {
+  if(options.method && options.method!=='GET') return new Response(JSON.stringify({detail:'Aperçu fictif : aucune connexion, création de compte ou demande d’e-mail réelle.'}),{status:409,headers:{'Content-Type':'application/json'}});
+  return new Response(JSON.stringify({schema:1,status:'preparation',version:null,sha256:null,size:null}),{headers:{'Content-Type':'application/json'}});
+};
 document.addEventListener('click', event => {
+  const submit = event.target.closest('button[type="submit"]');
+  if (submit?.form) {
+    event.preventDefault();
+    if (submit.form.reportValidity()) submit.form.dispatchEvent(new Event('submit',{bubbles:true,cancelable:true}));
+    return;
+  }
   const link = event.target.closest('a');
   if (!link) return;
   const href = link.getAttribute('href') || '';
@@ -56,14 +73,14 @@ document.addEventListener('click', event => {
         html = html.replace('</body>', '<script>' + js + '</script></body>')
         pages[name] = html
     options = ''.join(f'<option value="{name}">{label}</option>' for name, label in PAGES.items())
-    output = ROOT / '.build' / 'apercu-refonte-site.html'
+    output = ROOT / '.build' / ('apercu-connexion.html' if initial == 'compte.html' else 'apercu-refonte-site.html')
     output.parent.mkdir(exist_ok=True)
     parent_js = '''const pages=PAGES, assets=ASSETS;
 const frame=document.querySelector('iframe'), select=document.querySelector('select'), notice=document.querySelector('#preview-notice');
 let current='index.html';
 function show(name, hash='') {
   if (!Object.hasOwn(pages,name)) { notice.textContent='Cette action utilise le vrai espace client ou un service externe. Elle est désactivée dans cet aperçu.'; return; }
-  current=name; select.value=name; notice.textContent='Aperçu local · les liens vers le compte et les actions externes sont désactivés.';
+  current=name; select.value=name; notice.textContent='Aperçu local · les connexions, inscriptions et actions externes sont simulées ou désactivées.';
   let html=pages[name].replace(/@@ASSET:([^@]+)@@/g,(_,key)=>assets[key]);
   if (hash && /^#[a-zA-Z0-9_-]+$/.test(hash)) html=html.replace('</body>', '<script>document.getElementById('+JSON.stringify(hash.slice(1))+')?.scrollIntoView();<'+ '/script></body>');
   frame.srcdoc=html;
@@ -76,6 +93,7 @@ window.addEventListener('message',event=>{
   show(url.pathname.slice(1),url.hash);
 });
 show('index.html');'''.replace('PAGES', safe_json(pages)).replace('ASSETS', safe_json(assets))
+    parent_js = parent_js.replace("show('index.html');", f'show({safe_json(initial)});')
     # Keep all executable closing tags safe when embedded in this document.
     parent_js = parent_js.replace('</script', '<\\/script')
     preview = '''<!doctype html><html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Aperçu de la refonte ComptaBridge</title><style>
@@ -85,4 +103,6 @@ body{margin:0;background:#07111d;font:13px system-ui;color:#f3f7fb}header{paddin
 
 
 if __name__ == '__main__':
-    build()
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument('--page', choices=PAGES, default='index.html')
+    build(parser.parse_args().page)

@@ -32,7 +32,13 @@ test('aperçu vitrine : pages et démonstration navigables sans aucun service ex
   assert.equal(await frame.locator('[data-download-link]').isHidden(), true);
   await page.locator('#preview-page').selectOption('tarifs.html');
   await frame.getByRole('link', { name: 'Choisir le logiciel', exact: true }).click();
-  await page.locator('#preview-notice').getByText(/désactivée dans cet aperçu/).waitFor();
+  await frame.locator('#login-form').waitFor();
+  await frame.locator('#login-email').fill('demo@example.com');
+  await frame.locator('#login-password').fill('MotDePasseFictif123!');
+  await frame.locator('#login-form').getByRole('button', { name: 'Se connecter', exact: true }).click();
+  await frame.locator('#login-status').getByText(/aucune connexion, création de compte/).waitFor();
+  await frame.getByRole('button', { name: 'Créer mon compte', exact: true }).click();
+  await frame.locator('#register-form').waitFor();
   await page.locator('#preview-page').selectOption('legal/licence.html');
   await frame.getByRole('heading', { name: 'Conditions d’utilisation', exact: true }).waitFor();
   assert.deepEqual(outgoing, []); assert.deepEqual(errors, []);

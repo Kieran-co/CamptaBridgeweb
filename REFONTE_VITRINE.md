@@ -73,15 +73,18 @@ Pour enregistrer les captures de recette :
 CHROMIUM_EXECUTABLE_PATH=/usr/bin/chromium CB_PREVIEW_DIR=.build/screens npm test
 ```
 
-Pour relire le site avec navigation dans un seul fichier :
+Pour relire le site avec navigation dans un seul fichier, y compris les écrans de connexion et inscription :
 
 ```sh
 python3 scripts/preview_vitrine.py
+python3 scripts/preview_vitrine.py --page compte.html
 ```
 
-Ouvrir `.build/apercu-refonte-site.html`. Les pages, styles et images sont
-intégrés ; le cadre est isolé par un sandbox. Les liens vers le compte et les
-services externes sont désactivés. Le téléchargement y est volontairement
+Ouvrir `.build/apercu-refonte-site.html`, ou `.build/apercu-connexion.html` pour
+arriver directement sur les formulaires du compte. Les pages, styles et images sont
+intégrés ; le cadre est isolé par un sandbox. Les formulaires du compte sont visibles avec stockage en mémoire ; les
+connexions, inscriptions, demandes d’e-mail et services externes restent
+simulés ou désactivés. Le téléchargement y est volontairement
 indisponible. Ce fichier de revue n’est jamais à publier sur le site.
 
 ## Paquet de mise à jour
@@ -92,14 +95,17 @@ Après commit des fichiers relus :
 python3 scripts/package_vitrine.py
 ```
 
-`.build/ComptaBridge-refonte-vitrine.zip` contient 17 fichiers publics, les
+`.build/ComptaBridge-refonte-vitrine.zip` contient 20 fichiers publics, les
 instructions et un manifeste SHA-256 lié au commit. Le script refuse des octets
 différents du commit annoncé. Il complète le site déjà publié basé sur
 `aa7d3633c2f4df24c558e147aacc573e6fb08573`.
 
 Le manifeste Windows, `.htaccess`, les scripts de paiement et les autres
-fichiers du serveur sont conservés. Les deux fichiers client inclus ajustent
-uniquement la destination après connexion et sa version de cache. Sauvegarder
+fichiers du serveur sont conservés. Les fichiers client inclus harmonisent connexion, inscription et demande de
+réinitialisation avec la vitrine, conservent la destination après connexion et
+exigent le consentement avant inscription. Les mots de passe sont masqués lors
+des changements de formulaire et effacés après connexion réussie. Les routes
+et les données d’authentification attendues par l’API sont conservées. Sauvegarder
 avant transfert ; envoyer les dépendances et les nouvelles pages avant de
 remplacer `index.html`. La restauration est expliquée dans l’archive.
 

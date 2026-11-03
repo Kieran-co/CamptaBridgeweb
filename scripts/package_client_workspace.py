@@ -6,6 +6,7 @@ from zipfile import ZIP_DEFLATED, ZipFile
 
 ROOT = Path(__file__).resolve().parents[1]
 PUBLIC_FILES = (
+    'public.css', 'public.js', 'auth.css', 'auth-ui.js',
     'client-workspace.css', 'client-workspace.js', 'compte.js',
     'account-management.js', 'software-subscription.js', 'guarded-billing.js',
     'compte.html',
@@ -28,9 +29,9 @@ def package():
     output.parent.mkdir(exist_ok=True)
     instructions = '''COMPTABRIDGE — MISE A JOUR DE L'ESPACE CLIENT
 
-Cette archive contient uniquement les 7 fichiers publics de la refonte.
-Elle complète le site existant, basé sur la version revue 61ef92d
-(codex/single-company-offer). Elle n'est pas un site autonome.
+Cette archive contient uniquement les 11 fichiers publics de l'espace client.
+Elle complète le site existant avec la vitrine refaite de la branche
+codex/website-launch-redesign. Elle n'est pas un site autonome.
 Les fichiers LISEZ-MOI et MANIFESTE sont destinés au contrôle, pas au serveur.
 
 AVANT LE TRANSFERT
@@ -42,7 +43,8 @@ AVANT LE TRANSFERT
 
 TRANSFERT MANUEL, APRES VALIDATION
 3. Dans le dossier qui contient déjà compte.html (souvent www/), transférez
-   d'abord client-workspace.css et client-workspace.js, puis les quatre scripts
+   d'abord public.css, public.js, auth.css, auth-ui.js, client-workspace.css
+   et client-workspace.js, puis les quatre scripts
    existants modifiés. Transférez compte.html en dernier.
    Le contenu de site/ va directement dans ce dossier, sans créer site/ sur OVH.
    Conservez tous les autres fichiers du serveur.
@@ -51,9 +53,9 @@ TRANSFERT MANUEL, APRES VALIDATION
    Avec un compte de test, vérifiez aussi les espaces comptable/administrateur
    qui utilisent les scripts partagés. N'effectuez pas de paiement de recette
    en production pour tester la présentation.
-5. En cas de problème, restaurez les anciens fichiers sauvegardés et rechargez
-   sans cache. Retirez les deux nouveaux fichiers uniquement après restauration
-   de l'ancien compte.html.
+5. En cas de problème, restaurez les fichiers sauvegardés et rechargez sans
+   cache. Retirez les nouveaux fichiers uniquement après restauration de toutes
+   les pages qui les utilisent ; public.css et public.js sont partagés.
 
 L'archive ne publie rien automatiquement. Elle ne change ni PHP, ni l'API,
 ni les tarifs, ni Stripe, ni les droits d'accès. Elle n'ouvre pas les ventes.
